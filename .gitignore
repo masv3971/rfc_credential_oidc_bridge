@@ -5,6 +5,7 @@
 *.txt
 *.upload
 *~
+.serve.pid
 .tags
 /*-[0-9][0-9].xml
 /.*.mk
