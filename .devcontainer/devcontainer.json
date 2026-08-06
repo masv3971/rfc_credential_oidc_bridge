@@ -1,0 +1,15 @@
+{
+  "name": "RFC Draft Development",
+  "image": "mcr.microsoft.com/devcontainers/python:3.13",
+  "features": {
+    "ghcr.io/devcontainers/features/ruby:1": {}
+  },
+  "postCreateCommand": "pip install -r lib/requirements.txt && gem install kramdown-rfc",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "davidanson.vscode-markdownlint"
+      ]
+    }
+  }
+}
