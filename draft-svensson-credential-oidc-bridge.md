@@ -74,7 +74,7 @@ informative:
     date: 2024
     target: https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-05.html
   ISO.18013-5:
-    title: "Personal identification — ISO-compliant driving licence — Part 5: Mobile driving licence (mDL) application"
+    title: "Personal identification -- ISO-compliant driving licence -- Part 5: Mobile driving licence (mDL) application"
     author:
       - org: ISO/IEC
     date: 2021
@@ -312,9 +312,9 @@ documentation.
 The OIDC request model (scopes and the "claims" parameter) is
 intentionally simpler than the query languages available in
 presentation protocols (e.g., DCQL in OpenID4VP).  This means that
-certain constraints expressible in a presentation query — such as
+certain constraints expressible in a presentation query -- such as
 issuer restrictions, issuance date filters, or compound field
-requirements — cannot be communicated by the RP.  The OP MUST apply
+requirements -- cannot be communicated by the RP.  The OP MUST apply
 its own policy to resolve these edge cases (for example, by selecting
 the most recent matching credential or by restricting accepted
 issuers via configuration).  The OP SHOULD document any such policies
@@ -530,9 +530,9 @@ of scope:
    specific and determined by the OP operator.
 
 *  *Business logic and authorization decisions.* How the RP
-   interprets the received claims — for example, whether an EHIC
+   interprets the received claims -- for example, whether an EHIC
    credential grants access to a healthcare service, or whether a
-   PDA1 is sufficient for a given transaction — is entirely the RP's
+   PDA1 is sufficient for a given transaction -- is entirely the RP's
    responsibility and outside this specification.
 
 *  *Credential issuance.* This specification deals only with
@@ -551,7 +551,7 @@ of scope:
 
 In summary, this specification provides the plumbing for transporting
 verified credential claims through OIDC.  Everything above that layer
-— trust decisions, access control, and business rules — is the domain
+-- trust decisions, access control, and business rules -- is the domain
 of the deploying parties.
 
 # Implementation Status
@@ -587,10 +587,11 @@ Coverage
 : Implements all normative requirements of this specification.
 
 Contact
-: masv@sunet.se
+: Magnus Svensson (masv@sunet.se)
 
 Source Code
-: https://github.com/SUNET/vc (open source, BSD-2-Clause)
+: Available at https://github.com/SUNET/vc (open source,
+  BSD-2-Clause)
 
 # Security Considerations
 
@@ -652,7 +653,7 @@ This specification requests registration of the following claim in
 the IANA "JSON Web Token Claims" registry:
 
 Claim Name
-: presented_credentials
+: "presented_credentials"
 
 Claim Description
 : Digital credential claims obtained via an OpenID4VP presentation,
@@ -670,7 +671,7 @@ This specification requests registration of the following metadata
 parameter:
 
 Metadata Name
-: presented_credentials_supported
+: "presented_credentials_supported"
 
 Metadata Description
 : A JSON array describing the credential types the OP can collect
