@@ -151,7 +151,7 @@ Flow:
 
 # OP (Verifier/Bridge) Requirements
 
-## The presented_credentials Claim
+## The presented_credentials Claim {#presented-credentials-claim}
 
 The following is a non-normative example of an OIDC ID Token
 containing the "presented_credentials" claim with a credential set
@@ -192,7 +192,7 @@ containing two credentials:
 }
 ~~~
 
-### The presented_credentials Array
+### The presented_credentials Array {#presented-credentials-array}
 
 The "presented_credentials" claim is a top-level JSON array included
 in the OIDC ID Token or UserInfo response.  It contains credential
@@ -277,7 +277,7 @@ parameter or a registered scope), it MUST:
 3.  Extract the disclosed claims from each verified credential.
 
 4.  Construct the "presented_credentials" object as defined in
-    {{the-presented_credentials-array}}.
+    {{presented-credentials-array}}.
 
 5.  Include the "presented_credentials" claim in the ID Token, the
     UserInfo response, or both, depending on the OP's policy and the
@@ -432,7 +432,7 @@ on name or date of birth against the authenticated user's identity).
 ## Consuming Credential Claims
 
 The "presented_credentials" claim structure is defined in
-{{the-presented_credentials-claim}}.  The RP MUST parse the claim according to that
+{{presented-credentials-claim}}.  The RP MUST parse the claim according to that
 definition.  Specifically, the RP MUST:
 
 1.  Check for the presence of the "presented_credentials" claim.  If
@@ -662,7 +662,7 @@ Change Controller
 : IETF
 
 Specification Document(s)
-: {{the-presented_credentials-array}} of this document
+: {{presented-credentials-array}} of this document
 
 ## OpenID Connect Discovery Metadata Registration
 
