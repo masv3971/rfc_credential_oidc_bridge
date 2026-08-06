@@ -1,0 +1,3 @@
+# Automatically generated CODEOWNERS
+# Regenerate with `make update-codeowners`
+draft-svensson-credential-oidc-bridge.md masv@sunet.se leifj@siros.org joel@siros.org
