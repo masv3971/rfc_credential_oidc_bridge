@@ -149,6 +149,332 @@ Flow:
 
 {::boilerplate bcp14-tagged}
 
+# RP (Relying Party) Requirements
+
+## Requesting Credential Claims {#requesting-credential-claims}
+
+An RP that wishes to receive credential data via this bridge MUST
+include the appropriate credential type scopes in the OIDC
+Authentication Request.  Each scope corresponds to a credential type
+(e.g., "ehic", "pda1").  The presence of any credential type scope
+signals to the OP that the "requested_credentials" claim parameter
+applies.
+
+The requested scopes directly correlate to the keys in credential
+sets returned by the OP.  For example, if the RP requests scopes
+"ehic" and "pda1", the OP will return a credential set containing
+"ehic" and "pda1" entries.
+
+The RP MAY additionally use the "claims" request parameter to specify
+which individual claims within a credential type are desired,
+enabling selective disclosure.
+
+The "claims" member within a credential type entry supports two
+forms:
+
+*  *Array form (shorthand):* A JSON array of claim name strings.
+   All listed claims are treated as essential with no value
+   constraints.  Example: `"claims": ["name", "birth_date"]`.
+
+*  *Object form:* A JSON object where each key is a claim name and
+   each value is a JSON object with optional members:
+
+   essential
+   : A boolean indicating whether the claim MUST be disclosed.
+     Defaults to true if omitted.
+
+   value
+   : A JSON value that the disclosed claim MUST exactly equal.
+     If present, the OP MUST verify that the disclosed claim value
+     matches and MUST reject the credential if it does not.
+     If omitted, any disclosed value is accepted.
+
+When the array form is used, it is semantically equivalent to an
+object form where every listed claim has "essential": true and no
+"value" constraint.
+
+The "requested_credentials" object follows the OIDC Core
+{{OpenID.Core}} claims request parameter format.  The "essential"
+member at the top level indicates whether the
+"presented_credentials" claim MUST be present in the OP's response.
+The "credential_sets" member is an extension member as permitted by
+Section 5.5.1 of {{OpenID.Core}}.
+
+Each credential type entry within a credential set MAY also include
+the following optional members to express trust requirements:
+
+trusted_issuers
+: A JSON array of strings, where each string is an issuer identifier.
+  When present, the OP MUST only accept credentials issued by one of
+  the listed issuers.  If the wallet presents a credential from an
+  issuer not in this list, the OP MUST treat it as not satisfying the
+  request.  If omitted, the OP applies its own issuer policy.
+
+trusted_issuer_lists
+: A JSON array of strings, where each string is an HTTPS URI
+  identifying a published trust list.  The trust list is a JSON
+  document containing a "issuers" member whose value is a JSON array
+  of issuer identifier strings in the same format as
+  "trusted_issuers".  The OP MUST fetch and cache each referenced
+  trust list and MUST accept credentials from any issuer appearing in
+  at least one of the referenced lists.  When both "trusted_issuers"
+  and "trusted_issuer_lists" are present, the effective set of
+  trusted issuers is the union of the explicitly listed issuers and
+  the issuers from all referenced lists.  If both members are omitted,
+  the OP applies its own issuer policy.
+
+The following is a non-normative example requesting a PID from a
+specific set of trusted issuers:
+
+~~~ json
+{
+  "id_token": {
+    "requested_credentials": {
+      "essential": true,
+      "credential_sets": [
+        {
+          "pid": {
+            "essential": true,
+            "claims": ["name", "birth_date"],
+            "trusted_issuers": [
+              "https://pid.example.gov.se",
+              "https://pid.example.gov.no"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+~~~
+
+The following is a non-normative example using trust lists to accept
+PID and EHIC credentials from all issuers recognized by the EU trust
+list, without enumerating each issuer individually:
+
+~~~ json
+{
+  "id_token": {
+    "requested_credentials": {
+      "essential": true,
+      "credential_sets": [
+        {
+          "pid": {
+            "essential": true,
+            "claims": ["name", "birth_date"],
+            "trusted_issuer_lists": [
+              "https://trust.eu.example.org/pid-issuers.json"
+            ]
+          },
+          "ehic": {
+            "essential": true,
+            "claims": ["ehic_number"],
+            "trusted_issuer_lists": [
+              "https://trust.eu.example.org/ehic-issuers.json"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+~~~
+
+The following is a non-normative example of a trust list document
+served at the URI referenced above:
+
+~~~ json
+{
+  "issuers": [
+    "https://pid.example.gov.se",
+    "https://pid.example.gov.no",
+    "https://pid.example.gov.de",
+    "https://pid.example.gov.fr"
+  ]
+}
+~~~
+
+The RP MAY use the "credential_sets" structure within the
+"requested_credentials" claims request parameter to express
+combinatorial logic over credential types:
+
+*  *AND (within a set):* Credentials listed in the same credential
+   set with "essential": true are all required.  The OP MUST fail the
+   authentication if any essential credential in the set cannot be
+   obtained.
+
+*  *OR (between sets):* Multiple credential sets represent
+   alternatives.  The OP MUST attempt to satisfy the sets in order
+   and use the first set that can be fully satisfied.  Only one
+   credential set is returned in the response.
+
+The following is a non-normative example requesting PID AND EHIC
+together (both are required):
+
+~~~ json
+{
+  "id_token": {
+    "requested_credentials": {
+      "essential": true,
+      "credential_sets": [
+        {
+          "pid": { "essential": true, "claims": ["name"] },
+          "ehic": { "essential": true, "claims": ["ehic_number"] }
+        }
+      ]
+    }
+  }
+}
+~~~
+
+The following is a non-normative example requesting PID OR EHIC
+(either one satisfies the RP).  The OP tries the first set; if the
+wallet cannot provide a PID, it falls back to the second set:
+
+~~~ json
+{
+  "id_token": {
+    "requested_credentials": {
+      "essential": true,
+      "credential_sets": [
+        {
+          "pid": { "essential": true, "claims": ["name"] }
+        },
+        {
+          "ehic": { "essential": true, "claims": ["ehic_number"] }
+        }
+      ]
+    }
+  }
+}
+~~~
+
+The following is a non-normative example requesting PID (required)
+with EHIC as optional (nice-to-have):
+
+~~~ json
+{
+  "id_token": {
+    "requested_credentials": {
+      "essential": true,
+      "credential_sets": [
+        {
+          "pid": { "essential": true, "claims": ["name"] },
+          "ehic": { "essential": false, "claims": ["ehic_number"] }
+        }
+      ]
+    }
+  }
+}
+~~~
+
+The following is a non-normative example using the object form to
+request a PID with a value constraint and an optional claim:
+
+~~~ json
+{
+  "id_token": {
+    "requested_credentials": {
+      "essential": true,
+      "credential_sets": [
+        {
+          "pid": {
+            "essential": true,
+            "claims": {
+              "name": { "essential": true },
+              "age_over_18": { "essential": true, "value": true },
+              "email": { "essential": false }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+~~~
+
+In the above example the OP MUST ensure the wallet discloses "name"
+and "age_over_18", and that "age_over_18" equals true.  The "email"
+claim is requested but not required; the OP SHOULD request it from
+the wallet but MUST NOT fail if the wallet does not disclose it.
+
+If any credential marked essential is missing from the wallet's
+response and no alternative set can be satisfied, the OP MUST return
+an OIDC error response (e.g., "access_denied") rather than a partial
+credential set.
+
+If the wallet presents multiple credentials of the same type (e.g.,
+two EHICs for different family members), the OP returns all of them
+in the array.  The RP is responsible for selecting the appropriate
+credential by inspecting the returned claims (for example, matching
+on name or date of birth against the authenticated user's identity).
+
+## Consuming Credential Claims
+
+The "presented_credentials" claim structure is defined in
+{{presented-credentials-claim}}.  The RP MUST parse the claim according to that
+definition.  Specifically, the RP MUST:
+
+1.  Check for the presence of the "presented_credentials" claim.  If
+    the claim was requested as essential and is absent, the RP SHOULD
+    treat the authentication as failed.
+
+2.  Parse the "credentials" object and extract the entries relevant
+    to its use case.
+
+3.  Validate that the expected claims are present in each Credential
+    Entry's "claims" object.  If the RP specified a "value"
+    constraint for a claim, verify that the returned value matches.
+
+The RP MUST NOT assume that all requested scopes will be present in
+the response; the user may have declined to present certain
+credentials.  The RP MUST ignore unrecognised credential keys and
+unrecognised members within Credential Entry objects.
+
+## Trust Model
+
+The RP places trust in the OP to have correctly verified the
+presented credentials.  The RP does not interact with the wallet or
+credential issuer directly.  The trust relationship between the RP
+and the OP is established through standard OIDC mechanisms (client
+registration, token validation, TLS).
+
+## Liability and Accountability
+
+The bridge architecture shifts credential verification responsibility
+from the RP to the OP.  This has implications for liability that
+deployments MUST consider.
+
+The OP is the sole party that interacts with the wallet and verifies
+credential authenticity, revocation status, and holder binding.  The
+RP relies entirely on the OP's assertion that the credential claims
+are valid.  If the OP incorrectly accepts a forged, expired, or
+revoked credential, the RP has no independent means of detecting
+this.
+
+Deployments SHOULD establish clear agreements between the OP operator
+and RPs that address:
+
+*  The OP's obligations regarding credential verification (e.g.,
+   which trust frameworks it enforces, whether it checks revocation).
+
+*  Liability allocation when the OP accepts a credential that turns
+   out to be invalid or fraudulent.
+
+*  The OP's obligations to communicate changes to its verification
+   policy that may affect RP authorization decisions.
+
+*  Audit and logging requirements that allow after-the-fact review of
+   verification decisions.
+
+The "verification" metadata in the Credential Entry
+({{credential-entry-object}}) provides a technical mechanism for the OP
+to communicate verification details to the RP.  However, the
+"verification" object does not constitute a legal guarantee.  RPs
+operating in regulated environments (e.g., healthcare, finance)
+SHOULD require contractual assurances from the OP in addition to the
+technical signals provided by this specification.
+
 # OP (Verifier/Bridge) Requirements
 
 ## The presented_credentials Claim {#presented-credentials-claim}
@@ -167,8 +493,14 @@ containing two credentials:
     {
       "ehic": [
         {
-          "format": "vc+sd-jwt",
-          "vct": "https://credentials.example.org/ehic",
+          "type": "https://credential.example.org/ehic/1.0",
+          "issuer": "https://svs.example.se",
+          "valid_from": 1709251200,
+          "valid_until": 1740787200,
+          "verified_at": 1722772700,
+          "verification": {
+            "holder_binding": "key_binding"
+          },
           "claims": {
             "name": "John Doe",
             "dob": "1990-01-01",
@@ -178,8 +510,14 @@ containing two credentials:
       ],
       "pda1": [
         {
-          "format": "vc+sd-jwt",
-          "vct": "https://credentials.example.org/pda1",
+          "type": "https://credential.example.org/pda1/1.0",
+          "issuer": "https://tax.example.se",
+          "valid_from": 1709251200,
+          "valid_until": 1740787200,
+          "verified_at": 1722772700,
+          "verification": {
+            "holder_binding": "key_binding"
+          },
           "claims": {
             "name": "John Doe",
             "dob": "1990-01-01",
@@ -223,7 +561,15 @@ them.
 ### Credential Entry Object {#credential-entry-object}
 
 Each Credential Entry object represents a single credential presented
-during the presentation flow.  It MUST contain the following member:
+during the presentation flow.  It MUST contain the following members:
+
+type
+: A string identifying the credential type.  The value is protocol-
+  specific: for SD-JWT VC credentials it is the Verifiable Credential
+  Type (vct), for mdoc credentials it is the docType, and for other
+  formats it is whatever type identifier the credential format
+  defines.  The OP MUST set this field based on the presented
+  credential.
 
 claims
 : A JSON object {{RFC8259}} containing the disclosed claims from the
@@ -231,16 +577,73 @@ claims
   value.  Claim names are determined by the credential type and MUST
   be strings.  Claim values MAY be any valid JSON type.
 
-A Credential Entry object MAY contain the following additional
-members:
+It MAY contain the following additional members:
 
-format
-: A string indicating the original credential format (e.g., "vc+sd-
-  jwt", "mso_mdoc").  If omitted, the format is unspecified.
+issuer
+: A string identifying the entity that issued the credential.  For
+  SD-JWT VC credentials this is the "iss" claim value, for mdoc
+  credentials it is the issuing authority identifier.  The OP SHOULD
+  populate this field to allow the RP to make issuer-aware
+  authorization decisions.
 
-vct
-: A string containing the Verifiable Credential Type identifier, as
-  defined in the credential's metadata.
+valid_from
+: A NumericDate (as defined in {{RFC7519}}) indicating when the
+  credential became valid (i.e., the issuance or activation date).
+
+valid_until
+: A NumericDate indicating when the credential expires.  The OP
+  MUST NOT include credentials that have already expired at the time
+  of presentation unless the RP explicitly indicates willingness to
+  accept expired credentials.
+
+verified_at
+: A NumericDate indicating when the OP verified the credential
+  during the presentation flow.  This allows the RP to assess the
+  freshness of the verification relative to its own requirements.
+
+verification
+: A JSON object providing metadata about the verification the OP
+  performed on the credential.  This object MAY contain the
+  following members:
+
+  holder_binding
+  : A string describing the mechanism used to verify that the
+    presenter is the legitimate holder of the credential.  Values
+    are taken from the "Credential Holder Binding Methods" registry
+    defined in {{holder-binding-registry}}.
+
+  Additional members within the "verification" object MAY be present.
+  Implementations that do not recognise additional members MUST
+  ignore them.
+
+The following is a non-normative example of a Credential Entry with
+nested claims, as might appear in a PID credential:
+
+~~~ json
+{
+  "type": "urn:eu.europa.ec.eudi:pid:1",
+  "issuer": "https://pid.example.gov.se",
+  "valid_from": 1709251200,
+  "valid_until": 1740787200,
+  "verified_at": 1722772700,
+  "verification": {
+    "holder_binding": "key_binding"
+  },
+  "claims": {
+    "family_name": "Doe",
+    "given_name": "John",
+    "birth_date": "1990-01-01",
+    "address": {
+      "street_address": "123 Main St",
+      "locality": "Stockholm",
+      "postal_code": "11122",
+      "country": "SE"
+    },
+    "age_over_18": true,
+    "nationalities": ["SE", "NO"]
+  }
+}
+~~~
 
 Additional members MAY be present.  Implementations that do not
 recognise additional members MUST ignore them.
@@ -257,9 +660,45 @@ metadata field (e.g., "ehic", "pda1").
 
 The OP MAY additionally include a "presented_credentials_supported"
 member in its discovery metadata.  The value is a JSON array of
-objects, each containing at minimum a "scope" string and a "vct"
+objects, each containing at minimum a "scope" string and a "type"
 string, providing RPs with a machine-readable mapping between scopes
-and credential types.
+and the "type" value that will appear in the corresponding Credential
+Entry.  The OP MUST use the "type" value from this mapping when
+constructing Credential Entry objects, enabling the OP to translate
+the RP's scope request into the correct credential query (e.g., a
+DCQL query with the appropriate "vct_values" or "doctype_value")
+toward the wallet.
+
+The following is a non-normative example of relevant fields in an OP's
+discovery metadata:
+
+~~~ json
+{
+  "claims_supported": [
+    "sub",
+    "name",
+    "email",
+    "presented_credentials"
+  ],
+  "scopes_supported": [
+    "openid",
+    "profile",
+    "email",
+    "ehic",
+    "pda1"
+  ],
+  "presented_credentials_supported": [
+    {
+      "scope": "ehic",
+      "type": "urn:eu.europa.ec.eudi:ehic:1"
+    },
+    {
+      "scope": "pda1",
+      "type": "urn:eu.europa.ec.eudi:pda1:1"
+    }
+  ]
+}
+~~~
 
 ## Authentication Flow
 
@@ -290,6 +729,13 @@ returned to the RP.
 
 ## Credential Mapping
 
+The OP MUST use the "type" value associated with each scope to
+construct the credential presentation request toward the wallet.
+For example, when using OpenID4VP the OP would use the "type" value
+as the "vct_values" entry in a DCQL query for SD-JWT VC credentials,
+or as the "doctype_value" for mdoc credentials.  This ensures the
+OP requests the correct credential from the wallet.
+
 The OP MUST use the scope value as the key within the "credentials"
 object.  For example, if the RP requested scope "ehic", the resulting
 entry MUST be keyed as "ehic".  This ensures a predictable, stable
@@ -297,6 +743,22 @@ mapping between the RP's request and the response.
 
 The OP MUST NOT include claims that were not disclosed by the wallet.
 The OP MUST NOT modify claim values during the mapping.
+
+When the RP's request uses the object form of the "claims" member,
+the OP MUST enforce claim-level constraints:
+
+*  If a claim has "essential": true (or the default applies) and the
+   wallet does not disclose it, the credential MUST be treated as not
+   satisfying the request.
+
+*  If a claim specifies a "value" member and the disclosed value does
+   not exactly match (using JSON value equality as defined in
+   {{RFC8259}}), the credential MUST be treated as not satisfying the
+   request.
+
+*  Claims with "essential": false that are not disclosed by the wallet
+   MAY be omitted from the Credential Entry without failing the
+   request.
 
 The OP is responsible for translating the RP's OIDC-level request
 (scopes, claims parameter) into a protocol-specific credential query
@@ -326,137 +788,6 @@ OP and the wallet.  Whether the OP collected credentials via
 OpenID4VP, DIDComm, or any other mechanism, the resulting claim
 format MUST conform to this specification.  The RP MUST NOT need to
 be aware of which presentation protocol was used.
-
-# RP (Relying Party) Requirements
-
-## Requesting Credential Claims {#requesting-credential-claims}
-
-An RP that wishes to receive credential data via this bridge MUST
-include the appropriate credential type scopes in the OIDC
-Authentication Request.  Each scope corresponds to a credential type
-(e.g., "ehic", "pda1").  The presence of any credential type scope
-signals to the OP that the "requested_credentials" claim parameter
-applies.
-
-The requested scopes directly correlate to the keys in credential
-sets returned by the OP.  For example, if the RP requests scopes
-"ehic" and "pda1", the OP will return a credential set containing
-"ehic" and "pda1" entries.
-
-The RP MAY additionally use the "claims" request parameter to specify
-which individual claims within a credential type are desired,
-enabling selective disclosure.
-
-The RP MAY use the "credential_sets" structure within the
-"requested_credentials" claims request parameter to express
-combinatorial logic over credential types:
-
-*  *AND (within a set):* Credentials listed in the same credential
-   set with "essential": true are all required.  The OP MUST fail the
-   authentication if any essential credential in the set cannot be
-   obtained.
-
-*  *OR (between sets):* Multiple credential sets represent
-   alternatives.  The OP MUST attempt to satisfy the sets in order
-   and use the first set that can be fully satisfied.  Only one
-   credential set is returned in the response.
-
-The following is a non-normative example requesting PID AND EHIC
-together (both are required):
-
-~~~ json
-{
-  "id_token": {
-    "requested_credentials": {
-      "credential_sets": [
-        {
-          "pid": { "essential": true, "claims": ["name"] },
-          "ehic": { "essential": true, "claims": ["ehic_number"] }
-        }
-      ]
-    }
-  }
-}
-~~~
-
-The following is a non-normative example requesting PID OR EHIC
-(either one satisfies the RP).  The OP tries the first set; if the
-wallet cannot provide a PID, it falls back to the second set:
-
-~~~ json
-{
-  "id_token": {
-    "requested_credentials": {
-      "credential_sets": [
-        {
-          "pid": { "essential": true, "claims": ["name"] }
-        },
-        {
-          "ehic": { "essential": true, "claims": ["ehic_number"] }
-        }
-      ]
-    }
-  }
-}
-~~~
-
-The following is a non-normative example requesting PID (required)
-with EHIC as optional (nice-to-have):
-
-~~~ json
-{
-  "id_token": {
-    "requested_credentials": {
-      "credential_sets": [
-        {
-          "pid": { "essential": true, "claims": ["name"] },
-          "ehic": { "essential": false, "claims": ["ehic_number"] }
-        }
-      ]
-    }
-  }
-}
-~~~
-
-If any credential marked essential is missing from the wallet's
-response and no alternative set can be satisfied, the OP MUST return
-an OIDC error response (e.g., "access_denied") rather than a partial
-credential set.
-
-If the wallet presents multiple credentials of the same type (e.g.,
-two EHICs for different family members), the OP returns all of them
-in the array.  The RP is responsible for selecting the appropriate
-credential by inspecting the returned claims (for example, matching
-on name or date of birth against the authenticated user's identity).
-
-## Consuming Credential Claims
-
-The "presented_credentials" claim structure is defined in
-{{presented-credentials-claim}}.  The RP MUST parse the claim according to that
-definition.  Specifically, the RP MUST:
-
-1.  Check for the presence of the "presented_credentials" claim.  If
-    the claim was requested as essential and is absent, the RP SHOULD
-    treat the authentication as failed.
-
-2.  Parse the "credentials" object and extract the entries relevant
-    to its use case.
-
-3.  Validate that the expected claims are present in each Credential
-    Entry's "claims" object.
-
-The RP MUST NOT assume that all requested scopes will be present in
-the response; the user may have declined to present certain
-credentials.  The RP MUST ignore unrecognised credential keys and
-unrecognised members within Credential Entry objects.
-
-## Trust Model
-
-The RP places trust in the OP to have correctly verified the
-presented credentials.  The RP does not interact with the wallet or
-credential issuer directly.  The trust relationship between the RP
-and the OP is established through standard OIDC mechanisms (client
-registration, token validation, TLS).
 
 # Limitations and Considerations
 
@@ -515,6 +846,21 @@ When using scope-based mapping, the OP SHOULD document the mapping
 between scopes and credential types in its discovery metadata or out-
 of-band documentation.  The OP MUST ensure that the scope semantics
 are stable and do not change unexpectedly for registered RPs.
+
+## Fresh Presentation Requirement {#fresh-presentation}
+
+Each OIDC Authentication Request that includes credential scopes
+MUST result in a new credential presentation from the wallet.  The
+OP MUST initiate a fresh presentation protocol transaction (e.g.,
+OpenID4VP, DIDComm) for every authentication request and MUST NOT
+reuse credentials from a previous presentation.
+
+The OP MUST NOT store, cache, or persist credential data beyond the
+scope of the current authentication transaction.  Once the OP has
+constructed the ID Token or UserInfo response and delivered it to
+the RP, it MUST discard the credential claims.  This ensures that
+credential freshness is guaranteed and that the OP does not become
+an unnecessary repository of sensitive personal data.
 
 ## Scope of This Specification
 
@@ -621,6 +967,28 @@ within the "presented_credentials" object.  The OP MUST populate this
 claim exclusively from verified credential presentations.  The ID
 Token MUST be signed by the OP to protect integrity.
 
+## Trust List Fetching
+
+When the OP dereferences "trusted_issuer_lists" URIs provided by an
+RP, it MUST enforce the following safeguards:
+
+*  The OP MUST only fetch trust lists over HTTPS.
+
+*  The OP SHOULD maintain an allowlist of permitted trust list URIs
+   and MUST reject URIs not on that list.  This prevents an RP from
+   directing the OP to fetch arbitrary resources (SSRF).
+
+*  The OP MUST impose size limits on fetched trust list documents to
+   prevent resource exhaustion.
+
+*  The OP SHOULD cache trust lists and enforce a minimum refresh
+   interval to limit the impact of a compromised or unavailable trust
+   list endpoint.
+
+*  If a trust list cannot be fetched or parsed, the OP MUST treat it
+   as if no issuers were listed in that list.  The OP MUST NOT fall
+   back to accepting all issuers.
+
 ## Privacy Considerations
 
 The bridge architecture introduces the OP as a party that observes
@@ -682,6 +1050,34 @@ Change Controller
 
 Specification Document(s)
 : {{discovery}} of this document
+
+## Credential Holder Binding Methods Registry {#holder-binding-registry}
+
+This specification establishes the "Credential Holder Binding
+Methods" registry.  The registration policy is "Specification
+Required" as defined in Section 4.6 of {{!RFC8126}}.
+
+Each entry in the registry contains the following fields:
+
+Method Name
+: A short string identifying the holder binding method.
+
+Description
+: A brief description of the method.
+
+Change Controller
+: The entity responsible for the registration.
+
+Specification Document(s)
+: Reference to the specification defining the method.
+
+The initial contents of the registry are:
+
+| Method Name | Description | Change Controller | Specification |
+|:---|:---|:---|:---|
+| key_binding | Cryptographic proof of possession of a private key bound to the credential | IETF | {{credential-entry-object}} of this document |
+| biometric | Biometric verification of the presenter against data bound to the credential | IETF | {{credential-entry-object}} of this document |
+| pin | Verification of a PIN or passcode known to the credential holder | IETF | {{credential-entry-object}} of this document |
 
 
 --- back
