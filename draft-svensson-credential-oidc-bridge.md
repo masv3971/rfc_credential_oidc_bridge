@@ -154,11 +154,44 @@ Flow:
 ## Requesting Credential Claims {#requesting-credential-claims}
 
 An RP that wishes to receive credential data via this bridge MUST
-include the appropriate credential type scopes in the OIDC
-Authentication Request.  Each scope corresponds to a credential type
-(e.g., "ehic", "pda1").  The presence of any credential type scope
-signals to the OP that the "requested_credentials" claim parameter
-applies.
+use one or both of the following mechanisms in the OIDC
+Authentication Request:
+
+*  *Scope-based (simple):* Include credential type scopes in the
+   authorization request (e.g., `scope=openid ehic pda1`).  Each
+   scope tells the OP which credential type to collect from the
+   wallet.  The OP requests all available claims for those
+   credential types and returns them in the response.  This
+   approach requires no additional parameters but offers no
+   selective disclosure or value constraints from the RP side.
+
+*  *Claims-based (detailed):* Include a "requested_credentials"
+   member inside the OIDC "claims" request parameter (within the
+   "id_token" or "userinfo" entry).  This gives the RP fine-grained
+   control: which specific claims to request, whether each is
+   essential or optional, value constraints, and trusted issuer
+   requirements.  When using this mechanism the RP MUST still
+   include the corresponding credential type scopes so the OP
+   knows which credential types are being requested.
+
+The two mechanisms work together: scopes identify which credentials
+to collect, and the "requested_credentials" claims parameter (when
+present) specifies how to collect them.  If only scopes are present
+without a "requested_credentials" claims parameter, the OP requests
+all available claims for the given credential types.
+
+The following is a non-normative example of a scope-based request
+(no claims parameter).  The RP requests EHIC and PDA1 credentials
+with all available claims:
+
+~~~ http
+GET /authorize?
+  response_type=code
+  &scope=openid ehic pda1
+  &client_id=https://rp.example.org
+  &redirect_uri=https://rp.example.org/cb
+  &nonce=n-0S6_WzA2Mj HTTP/1.1
+~~~
 
 The requested scopes directly correlate to the keys in credential
 sets returned by the OP.  For example, if the RP requests scopes
@@ -169,29 +202,28 @@ The RP MAY additionally use the "claims" request parameter to specify
 which individual claims within a credential type are desired,
 enabling selective disclosure.
 
-The "claims" member within a credential type entry supports two
-forms:
+The "claims" member within a credential type entry is a JSON array
+of claim query objects.  Each claim query object contains the
+following members:
 
-*  *Array form (shorthand):* A JSON array of claim name strings.
-   All listed claims are treated as essential with no value
-   constraints.  Example: `"claims": ["name", "birth_date"]`.
+path
+: REQUIRED.  A non-empty JSON array of strings representing the
+  path to the claim within the credential, following the Claims
+  Path Pointer syntax defined in Section 7 of {{OpenID4VP}}.
+  For top-level claims the array contains a single string
+  (e.g., `["name"]`).  For nested claims the array contains one
+  element per level (e.g., `["address", "street_address"]`).
 
-*  *Object form:* A JSON object where each key is a claim name and
-   each value is a JSON object with optional members:
+essential
+: OPTIONAL.  A boolean indicating whether the claim MUST be
+  disclosed.  Defaults to true if omitted.
 
-   essential
-   : A boolean indicating whether the claim MUST be disclosed.
-     Defaults to true if omitted.
-
-   value
-   : A JSON value that the disclosed claim MUST exactly equal.
-     If present, the OP MUST verify that the disclosed claim value
-     matches and MUST reject the credential if it does not.
-     If omitted, any disclosed value is accepted.
-
-When the array form is used, it is semantically equivalent to an
-object form where every listed claim has "essential": true and no
-"value" constraint.
+value
+: OPTIONAL.  A JSON value that the disclosed claim MUST exactly
+  equal.  If present, the OP MUST verify that the disclosed claim
+  value matches and MUST treat the credential as not satisfying
+  the request if it does not.  If omitted, any disclosed value is
+  accepted.
 
 The "requested_credentials" object follows the OIDC Core
 {{OpenID.Core}} claims request parameter format.  The "essential"
@@ -235,7 +267,10 @@ specific set of trusted issuers:
         {
           "pid": {
             "essential": true,
-            "claims": ["name", "birth_date"],
+            "claims": [
+              { "path": ["name"] },
+              { "path": ["birth_date"] }
+            ],
             "trusted_issuers": [
               "https://pid.example.gov.se",
               "https://pid.example.gov.no"
@@ -261,14 +296,19 @@ list, without enumerating each issuer individually:
         {
           "pid": {
             "essential": true,
-            "claims": ["name", "birth_date"],
+            "claims": [
+              { "path": ["name"] },
+              { "path": ["birth_date"] }
+            ],
             "trusted_issuer_lists": [
               "https://trust.eu.example.org/pid-issuers.json"
             ]
           },
           "ehic": {
             "essential": true,
-            "claims": ["ehic_number"],
+            "claims": [
+              { "path": ["ehic_number"] }
+            ],
             "trusted_issuer_lists": [
               "https://trust.eu.example.org/ehic-issuers.json"
             ]
@@ -318,8 +358,14 @@ together (both are required):
       "essential": true,
       "credential_sets": [
         {
-          "pid": { "essential": true, "claims": ["name"] },
-          "ehic": { "essential": true, "claims": ["ehic_number"] }
+          "pid": {
+            "essential": true,
+            "claims": [{ "path": ["name"] }]
+          },
+          "ehic": {
+            "essential": true,
+            "claims": [{ "path": ["ehic_number"] }]
+          }
         }
       ]
     }
@@ -338,10 +384,16 @@ wallet cannot provide a PID, it falls back to the second set:
       "essential": true,
       "credential_sets": [
         {
-          "pid": { "essential": true, "claims": ["name"] }
+          "pid": {
+            "essential": true,
+            "claims": [{ "path": ["name"] }]
+          }
         },
         {
-          "ehic": { "essential": true, "claims": ["ehic_number"] }
+          "ehic": {
+            "essential": true,
+            "claims": [{ "path": ["ehic_number"] }]
+          }
         }
       ]
     }
@@ -359,8 +411,14 @@ with EHIC as optional (nice-to-have):
       "essential": true,
       "credential_sets": [
         {
-          "pid": { "essential": true, "claims": ["name"] },
-          "ehic": { "essential": false, "claims": ["ehic_number"] }
+          "pid": {
+            "essential": true,
+            "claims": [{ "path": ["name"] }]
+          },
+          "ehic": {
+            "essential": false,
+            "claims": [{ "path": ["ehic_number"] }]
+          }
         }
       ]
     }
@@ -368,8 +426,8 @@ with EHIC as optional (nice-to-have):
 }
 ~~~
 
-The following is a non-normative example using the object form to
-request a PID with a value constraint and an optional claim:
+The following is a non-normative example requesting a PID with a
+value constraint and an optional claim:
 
 ~~~ json
 {
@@ -380,11 +438,11 @@ request a PID with a value constraint and an optional claim:
         {
           "pid": {
             "essential": true,
-            "claims": {
-              "name": { "essential": true },
-              "age_over_18": { "essential": true, "value": true },
-              "email": { "essential": false }
-            }
+            "claims": [
+              { "path": ["name"], "essential": true },
+              { "path": ["age_over_18"], "essential": true, "value": true },
+              { "path": ["email"], "essential": false }
+            ]
           }
         }
       ]
@@ -397,6 +455,31 @@ In the above example the OP MUST ensure the wallet discloses "name"
 and "age_over_18", and that "age_over_18" equals true.  The "email"
 claim is requested but not required; the OP SHOULD request it from
 the wallet but MUST NOT fail if the wallet does not disclose it.
+
+The following is a non-normative example requesting nested claims
+from a PID credential:
+
+~~~ json
+{
+  "id_token": {
+    "requested_credentials": {
+      "essential": true,
+      "credential_sets": [
+        {
+          "pid": {
+            "essential": true,
+            "claims": [
+              { "path": ["name"] },
+              { "path": ["address", "street_address"] },
+              { "path": ["address", "country"], "value": "SE" }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+~~~
 
 If any credential marked essential is missing from the wallet's
 response and no alternative set can be satisfied, the OP MUST return
@@ -653,49 +736,56 @@ An OP that supports this bridge mechanism MUST include
 "presented_credentials" in the "claims_supported" list in its OpenID
 Connect Discovery {{OpenID.Discovery}} metadata document.
 
-The OP SHOULD also advertise the credential types it can collect by
-listing the corresponding scopes in the "scopes_supported" discovery
-metadata field (e.g., "ehic", "pda1").
+The OP MUST include a "credential_presentations_supported" member
+in its discovery metadata.  This is a JSON object where each key is
+a scope value that the RP can use in the authorization request, and
+each value is an object describing the credential type configuration.
+Each configuration object MUST contain at minimum:
 
-The OP MAY additionally include a "presented_credentials_supported"
-member in its discovery metadata.  The value is a JSON array of
-objects, each containing at minimum a "scope" string and a "type"
-string, providing RPs with a machine-readable mapping between scopes
-and the "type" value that will appear in the corresponding Credential
-Entry.  The OP MUST use the "type" value from this mapping when
-constructing Credential Entry objects, enabling the OP to translate
-the RP's scope request into the correct credential query (e.g., a
-DCQL query with the appropriate "vct_values" or "doctype_value")
-toward the wallet.
+format
+: A string identifying the credential format (e.g., "dc+sd-jwt",
+  "mso_mdoc").
 
-The following is a non-normative example of relevant fields in an OP's
-discovery metadata:
+type
+: A string identifying the credential type.  For SD-JWT VC
+  credentials this is the vct value; for mdoc credentials this is
+  the docType.
 
-~~~ json
+The OP uses this metadata to translate the RP's scope request into
+the correct credential query (e.g., a DCQL query with the
+appropriate "vct_values" or "doctype_value") toward the wallet.
+The Credential Entry "type" field in the response MUST be populated
+from the presented credential itself and MUST match the "type" value
+declared in this mapping.
+
+The following is a non-normative example of an RP discovering the
+OP's supported credential types:
+
+~~~ http
+GET /.well-known/openid-configuration HTTP/1.1
+Host: op.example.org
+~~~
+
+~~~ http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
 {
-  "claims_supported": [
-    "sub",
-    "name",
-    "email",
-    "presented_credentials"
-  ],
-  "scopes_supported": [
-    "openid",
-    "profile",
-    "email",
-    "ehic",
-    "pda1"
-  ],
-  "presented_credentials_supported": [
-    {
-      "scope": "ehic",
+  "issuer": "https://op.example.org",
+  "authorization_endpoint": "https://op.example.org/authorize",
+  "token_endpoint": "https://op.example.org/token",
+  "userinfo_endpoint": "https://op.example.org/userinfo",
+  "jwks_uri": "https://op.example.org/jwks.json",
+  "credential_presentations_supported": {
+    "ehic": {
+      "format": "dc+sd-jwt",
       "type": "urn:eu.europa.ec.eudi:ehic:1"
     },
-    {
-      "scope": "pda1",
+    "pda1": {
+      "format": "dc+sd-jwt",
       "type": "urn:eu.europa.ec.eudi:pda1:1"
     }
-  ]
+  }
 }
 ~~~
 
@@ -705,19 +795,27 @@ When the OP receives an OIDC Authentication Request that includes a
 request for credentials (via the "requested_credentials" claims
 parameter or a registered scope), it MUST:
 
-1.  Initiate a credential presentation request to the user's wallet
-    for the requested credential types, using the presentation
+1.  Validate that each credential type scope corresponds to a key in
+    the OP's "credential_presentations_supported" metadata.  The OP
+    MUST ignore any credential type scope that is not present in its
+    metadata.  If none of the requested credential scopes are
+    supported, the OP MUST proceed with authentication without
+    credential presentation (or return an error if the
+    "requested_credentials" claim was marked essential).
+
+2.  Initiate a credential presentation request to the user's wallet
+    for the supported credential types, using the presentation
     protocol supported by the deployment.
 
-2.  Verify the presented credentials according to the applicable
+3.  Verify the presented credentials according to the applicable
     trust framework.
 
-3.  Extract the disclosed claims from each verified credential.
+4.  Extract the disclosed claims from each verified credential.
 
-4.  Construct the "presented_credentials" object as defined in
+5.  Construct the "presented_credentials" object as defined in
     {{presented-credentials-array}}.
 
-5.  Include the "presented_credentials" claim in the ID Token, the
+6.  Include the "presented_credentials" claim in the ID Token, the
     UserInfo response, or both, depending on the OP's policy and the
     size considerations described in {{claim-set-size-limits}}.
 
@@ -728,36 +826,91 @@ returned to the RP.
 
 ## Credential Mapping
 
-The OP MUST use the "type" value associated with each scope to
-construct the credential presentation request toward the wallet.
-For example, when using OpenID4VP the OP would use the "type" value
-as the "vct_values" entry in a DCQL query for SD-JWT VC credentials,
-or as the "doctype_value" for mdoc credentials.  This ensures the
-OP requests the correct credential from the wallet.
+The OP uses the "credential_presentations_supported" discovery
+metadata to translate scopes into credential queries.  For each
+credential type scope in the authorization request, the OP looks up
+the corresponding key in "credential_presentations_supported" and
+uses the "format" and "type" values to construct the presentation
+request.  The same key is used as the DCQL "id" and as the key in
+the "presented_credentials" response.
 
-The OP MUST use the scope value as the key within the "credentials"
-object.  For example, if the RP requested scope "ehic", the resulting
-entry MUST be keyed as "ehic".  This ensures a predictable, stable
-mapping between the RP's request and the response.
+The binding is:
+
+*  The key in "credential_presentations_supported" (e.g., "ehic")
+   is the scope value the RP includes in the authorization request.
+
+*  The OP MUST use this same value as the "id" in the DCQL
+   Credential Query.
+
+*  The OP MUST use the "format" and "type" from the configuration
+   entry to populate the DCQL "format" and "meta" fields.
+
+*  The OP MUST use this same value as the key in the
+   "presented_credentials" response.
+
+For example, given the following discovery metadata:
+
+~~~ json
+"credential_presentations_supported": {
+  "ehic": {
+    "format": "dc+sd-jwt",
+    "type": "urn:eu.europa.ec.eudi:ehic:1"
+  }
+}
+~~~
+
+and an RP request with `scope=openid ehic pda1`, the OP constructs:
+
+~~~ json
+{
+  "credentials": [
+    {
+      "id": "ehic",
+      "format": "dc+sd-jwt",
+      "meta": { "vct_values": ["urn:eu.europa.ec.eudi:ehic:1"] },
+      "claims": [...]
+    },
+    {
+      "id": "pda1",
+      "format": "dc+sd-jwt",
+      "meta": { "vct_values": ["urn:eu.europa.ec.eudi:pda1:1"] },
+      "claims": [...]
+    }
+  ]
+}
+~~~
+
+The wallet returns a VP Token keyed by these same "id" values,
+allowing the OP to map results back to the corresponding scope.
+
+The OP MUST use the scope value as the key within the
+"presented_credentials" response object.  For example, if the RP
+requested scope "ehic", the resulting entry MUST be keyed as "ehic".
+This ensures a predictable, stable mapping between the RP's request
+and the response.
 
 The OP MUST NOT include claims that were not disclosed by the wallet.
 The OP MUST NOT modify claim values during the mapping.
 
-When the RP's request uses the object form of the "claims" member,
-the OP MUST enforce claim-level constraints:
+The OP MUST enforce claim-level constraints specified in the
+"claims" array:
 
-*  If a claim has "essential": true (or the default applies) and the
-   wallet does not disclose it, the credential MUST be treated as not
+*  If a claim query has "essential": true (or the default applies)
+   and the wallet does not disclose the claim identified by "path",
+   the credential MUST be treated as not satisfying the request.
+
+*  If a claim query specifies a "value" member and the disclosed
+   value does not exactly match (using JSON value equality as
+   defined in {{RFC8259}}), the credential MUST be treated as not
    satisfying the request.
 
-*  If a claim specifies a "value" member and the disclosed value does
-   not exactly match (using JSON value equality as defined in
-   {{RFC8259}}), the credential MUST be treated as not satisfying the
-   request.
+*  Claim queries with "essential": false that are not disclosed by
+   the wallet MAY be omitted from the Credential Entry without
+   failing the request.
 
-*  Claims with "essential": false that are not disclosed by the wallet
-   MAY be omitted from the Credential Entry without failing the
-   request.
+The OP translates each "path" array directly into the corresponding
+DCQL Claims Path Pointer when constructing the presentation query
+toward the wallet.
 
 The OP is responsible for translating the RP's OIDC-level request
 (scopes, claims parameter) into a protocol-specific credential query
@@ -769,6 +922,47 @@ specific and outside the scope of this specification.  The OP MUST
 document the mapping between OIDC scopes and the credential types
 they resolve to, either in its discovery metadata or in out-of-band
 documentation.
+
+When the RP's request includes a "value" constraint on a claim, the
+OP SHOULD propagate this constraint to the wallet where the
+presentation protocol supports it.  The RP's "path" arrays map
+directly to DCQL Claims Path Pointers, and the "value" member maps
+to the DCQL "values" array.  For example, an RP request containing:
+
+~~~ json
+"claims": [
+  { "path": ["name"] },
+  { "path": ["address", "country"], "value": "SE" }
+]
+~~~
+
+would translate to the following DCQL Claims Query entries:
+
+~~~ json
+{
+  "credentials": [
+    {
+      "id": "ehic",
+      "format": "dc+sd-jwt",
+      "meta": { "vct_values": ["urn:credential:ehic"] },
+      "claims": [
+        { "path": ["name"] },
+        { "path": ["address", "country"], "values": ["SE"] }
+      ]
+    }
+  ]
+}
+~~~
+
+However, DCQL value matching is defined as best-effort: the wallet
+SHOULD filter on the constraint but is not required to do so (see
+Section 6.4.1 of {{OpenID4VP}}).  Consequently, the OP MUST NOT rely
+on the wallet to enforce value constraints and MUST always validate
+disclosed claim values against the RP's "value" requirements after
+receiving the presentation.  Propagating the constraint to the wallet
+remains useful as a privacy optimisation, because it allows the
+wallet to avoid disclosing credentials that would not satisfy the
+request.
 
 The OIDC request model (scopes and the "claims" parameter) is
 intentionally simpler than the query languages available in
@@ -1038,11 +1232,11 @@ This specification requests registration of the following metadata
 parameter:
 
 Metadata Name
-: "presented_credentials_supported"
+: "credential_presentations_supported"
 
 Metadata Description
-: A JSON array describing the credential types the OP can collect
-  via OpenID4VP and expose as OIDC claims.
+: A JSON object describing the credential types the OP can collect
+  via credential presentation and expose as OIDC claims.
 
 Change Controller
 : IETF

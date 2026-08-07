@@ -9,8 +9,14 @@ case "${1:-start}" in
       exit 1
     fi
     python3 -m http.server --bind 127.0.0.1 "$PORT" &
-    echo $! > "$PIDFILE"
-    echo "Serving on http://localhost:$PORT (pid $!)"
+    pid=$!
+    sleep 0.5
+    if ! kill -0 "$pid" 2>/dev/null; then
+      echo "Failed to start server on port $PORT" >&2
+      exit 1
+    fi
+    echo "$pid" > "$PIDFILE"
+    echo "Serving on http://localhost:$PORT (pid $pid)"
     ;;
   stop)
     if [ -f "$PIDFILE" ]; then
