@@ -887,6 +887,10 @@ For example, given the following discovery metadata:
     "ehic": {
       "format": "dc+sd-jwt",
       "type": "urn:eu.europa.ec.eudi:ehic:1"
+    },
+    "pda1": {
+      "format": "dc+sd-jwt",
+      "type": "urn:eu.europa.ec.eudi:pda1:1"
     }
   }
 }
