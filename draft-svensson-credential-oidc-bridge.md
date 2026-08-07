@@ -154,31 +154,30 @@ Flow:
 ## Requesting Credential Claims {#requesting-credential-claims}
 
 An RP that wishes to receive credential data via this bridge MUST
-use one or both of the following mechanisms in the OIDC
-Authentication Request:
+include credential type scopes in the OIDC Authentication Request
+(e.g., `scope=openid ehic pda1`).  Scopes are always required
+because they tell the OP which credential types to collect.  The RP
+MAY additionally include a "requested_credential_sets" claims
+parameter for fine-grained control.
 
-*  *Scope-based (simple):* Include credential type scopes in the
-   authorization request (e.g., `scope=openid ehic pda1`).  Each
-   scope tells the OP which credential type to collect from the
-   wallet.  The OP requests all available claims for those
-   credential types and returns them in the response.  This
-   approach requires no additional parameters but offers no
-   selective disclosure or value constraints from the RP side.
+*  *Scope-based (simple):* Include only credential type scopes.
+   The OP requests all available claims for those credential types
+   and returns them in the response.  This approach requires no
+   additional parameters but offers no selective disclosure or
+   value constraints from the RP side.
 
-*  *Claims-based (detailed):* Include a "requested_credential_sets"
-   member inside the OIDC "claims" request parameter (within the
-   "id_token" or "userinfo" entry).  This gives the RP fine-grained
-   control: which specific claims to request, whether each is
-   essential or optional, value constraints, and trusted issuer
-   requirements.  When using this mechanism the RP MUST still
-   include the corresponding credential type scopes so the OP
-   knows which credential types are being requested.
+*  *Scope + claims-based (detailed):* Include credential type scopes
+   AND a "requested_credential_sets" member inside the OIDC "claims"
+   request parameter (within the "id_token" or "userinfo" entry).
+   This gives the RP fine-grained control: which specific claims to
+   request, whether each is essential or optional, value constraints,
+   and trusted issuer requirements.
 
-The two mechanisms work together: scopes identify which credentials
-to collect, and the "requested_credential_sets" claims parameter (when
-present) specifies how to collect them.  If only scopes are present
-without a "requested_credential_sets" claims parameter, the OP requests
-all available claims for the given credential types.
+Scopes identify which credentials to collect, and the
+"requested_credential_sets" claims parameter (when present) specifies
+how to collect them.  If only scopes are present without a
+"requested_credential_sets" claims parameter, the OP requests all
+available claims for the given credential types.
 
 The following is a non-normative example of a scope-based request
 (no claims parameter).  The RP requests EHIC and PDA1 credentials
