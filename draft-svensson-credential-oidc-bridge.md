@@ -122,16 +122,16 @@ The following diagram illustrates the high-level interaction between
 the participants:
 
 ~~~ ascii-art
-+--------+              +------------------+            +----------+
-|        | 1. OIDC AuthN  |        OP        | 2. Present  |          |
-|   RP   | -------------> |     (Bridge)     | ----------> |  Wallet  |
-|        |              |                | <---------- |          |
-|        |              |                | 3. Response |          |
-|        |              |                |           +----------+
-|        |              | 4. Verify &      |
++--------+                +------------------+              +----------+
+|        | 1. OIDC AuthN  |                  | 2. Present   |          |
+|   RP   | -------------> |    OP (Bridge)   | -----------> |  Wallet  |
+|        |                |                  | <----------- |          |
+|        |                |                  | 3. Response  |          |
+|        |                |                  |              +----------+
+|        |                | 4. Verify &      |
 |        | 5. ID Token    |    extract claims|
-|        | <------------- |                |
-+--------+              +------------------+
+|        | <------------- |                  |
++--------+                +------------------+
 ~~~
 
 The presentation protocol (step 2-3) is out of scope.
@@ -593,7 +593,11 @@ containing two credentials:
           "claims": {
             "name": "John Doe",
             "dob": "1990-01-01",
-            "pda1_number": "0987654321"
+            "pda1_number": "0987654321",
+            "employer": {
+              "name": "Example Corp AB",
+              "country": "SE"
+            }
           }
         }
       ]
@@ -881,6 +885,18 @@ and the response.
 
 The OP MUST NOT include claims that were not disclosed by the wallet.
 The OP MUST NOT modify claim values during the mapping.
+
+When the RP uses the claims-based request mechanism (with explicit
+"path" entries), the OP MUST include only the requested claims in the
+Credential Entry's "claims" object.  Even if the wallet discloses
+additional claims (for example, because the credential format does
+not support selective disclosure), the OP MUST NOT relay unrequested
+claims to the RP.  This ensures data minimization regardless of the
+underlying credential format's selective disclosure capabilities.
+
+When the RP uses scope-only (no "requested_credential_sets" claims
+parameter), the OP includes all claims disclosed by the wallet, since
+the RP did not express a preference for specific claims.
 
 The OP MUST enforce claim-level constraints specified in the
 "claims" array:
