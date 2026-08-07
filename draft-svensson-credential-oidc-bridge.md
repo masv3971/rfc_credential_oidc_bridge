@@ -122,16 +122,16 @@ The following diagram illustrates the high-level interaction between
 the participants:
 
 ~~~ ascii-art
-+--------+                +------------------+              +----------+
++--------+              +------------------+            +----------+
 |        | 1. OIDC AuthN  |        OP        | 2. Present  |          |
 |   RP   | -------------> |     (Bridge)     | ----------> |  Wallet  |
-|        |                |                  | <---------- |          |
-|        |                |                  | 3. Response |          |
-|        |                |                  |             +----------+
-|        |                | 4. Verify &      |
+|        |              |                | <---------- |          |
+|        |              |                | 3. Response |          |
+|        |              |                |           +----------+
+|        |              | 4. Verify &      |
 |        | 5. ID Token    |    extract claims|
-|        | <------------- |                  |
-+--------+                +------------------+
+|        | <------------- |                |
++--------+              +------------------+
 ~~~
 
 The presentation protocol (step 2-3) is out of scope.
@@ -165,7 +165,7 @@ Authentication Request:
    approach requires no additional parameters but offers no
    selective disclosure or value constraints from the RP side.
 
-*  *Claims-based (detailed):* Include a "requested_credentials"
+*  *Claims-based (detailed):* Include a "requested_credential_sets"
    member inside the OIDC "claims" request parameter (within the
    "id_token" or "userinfo" entry).  This gives the RP fine-grained
    control: which specific claims to request, whether each is
@@ -175,9 +175,9 @@ Authentication Request:
    knows which credential types are being requested.
 
 The two mechanisms work together: scopes identify which credentials
-to collect, and the "requested_credentials" claims parameter (when
+to collect, and the "requested_credential_sets" claims parameter (when
 present) specifies how to collect them.  If only scopes are present
-without a "requested_credentials" claims parameter, the OP requests
+without a "requested_credential_sets" claims parameter, the OP requests
 all available claims for the given credential types.
 
 The following is a non-normative example of a scope-based request
@@ -225,12 +225,10 @@ value
   the request if it does not.  If omitted, any disclosed value is
   accepted.
 
-The "requested_credentials" object follows the OIDC Core
-{{OpenID.Core}} claims request parameter format.  The "essential"
-member at the top level indicates whether the
-"presented_credentials" claim MUST be present in the OP's response.
-The "credential_sets" member is an extension member as permitted by
-Section 5.5.1 of {{OpenID.Core}}.
+The "requested_credential_sets" member is placed inside the OIDC
+"claims" request parameter as permitted by Section 5.5.1 of
+{{OpenID.Core}}.  Its value is a JSON array of credential set
+objects, each representing one combination of credentials to request.
 
 Each credential type entry within a credential set MAY also include
 the following optional members to express trust requirements:
@@ -261,24 +259,21 @@ specific set of trusted issuers:
 ~~~ json
 {
   "id_token": {
-    "requested_credentials": {
-      "essential": true,
-      "credential_sets": [
-        {
-          "pid": {
-            "essential": true,
-            "claims": [
-              { "path": ["name"] },
-              { "path": ["birth_date"] }
-            ],
-            "trusted_issuers": [
-              "https://pid.example.gov.se",
-              "https://pid.example.gov.no"
-            ]
-          }
+    "requested_credential_sets": [
+      {
+        "pid": {
+          "essential": true,
+          "claims": [
+            {"path": ["name"]},
+            {"path": ["birth_date"]}
+          ],
+          "trusted_issuers": [
+            "https://pid.example.gov.se",
+            "https://pid.example.gov.no"
+          ]
         }
-      ]
-    }
+      }
+    ]
   }
 }
 ~~~
@@ -290,32 +285,29 @@ list, without enumerating each issuer individually:
 ~~~ json
 {
   "id_token": {
-    "requested_credentials": {
-      "essential": true,
-      "credential_sets": [
-        {
-          "pid": {
-            "essential": true,
-            "claims": [
-              { "path": ["name"] },
-              { "path": ["birth_date"] }
-            ],
-            "trusted_issuer_lists": [
-              "https://trust.eu.example.org/pid-issuers.json"
-            ]
-          },
-          "ehic": {
-            "essential": true,
-            "claims": [
-              { "path": ["ehic_number"] }
-            ],
-            "trusted_issuer_lists": [
-              "https://trust.eu.example.org/ehic-issuers.json"
-            ]
-          }
+    "requested_credential_sets": [
+      {
+        "pid": {
+          "essential": true,
+          "claims": [
+            {"path": ["name"]},
+            {"path": ["birth_date"]}
+          ],
+          "trusted_issuer_lists": [
+            "https://trust.eu.example.org/pid-issuers.json"
+          ]
+        },
+        "ehic": {
+          "essential": true,
+          "claims": [
+            {"path": ["ehic_number"]}
+          ],
+          "trusted_issuer_lists": [
+            "https://trust.eu.example.org/ehic-issuers.json"
+          ]
         }
-      ]
-    }
+      }
+    ]
   }
 }
 ~~~
@@ -334,9 +326,9 @@ served at the URI referenced above:
 }
 ~~~
 
-The RP MAY use the "credential_sets" structure within the
-"requested_credentials" claims request parameter to express
-combinatorial logic over credential types:
+The "requested_credential_sets" array MUST contain at least one
+credential set entry.  The structure expresses combinatorial logic
+over credential types:
 
 *  *AND (within a set):* Credentials listed in the same credential
    set with "essential": true are all required.  The OP MUST fail the
@@ -354,21 +346,22 @@ together (both are required):
 ~~~ json
 {
   "id_token": {
-    "requested_credentials": {
-      "essential": true,
-      "credential_sets": [
-        {
-          "pid": {
-            "essential": true,
-            "claims": [{ "path": ["name"] }]
-          },
-          "ehic": {
-            "essential": true,
-            "claims": [{ "path": ["ehic_number"] }]
-          }
+    "requested_credential_sets": [
+      {
+        "pid": {
+          "essential": true,
+          "claims": [
+            {"path": ["name"]}
+          ]
+        },
+        "ehic": {
+          "essential": true,
+          "claims": [
+            {"path": ["ehic_number"]}
+          ]
         }
-      ]
-    }
+      }
+    ]
   }
 }
 ~~~
@@ -380,23 +373,24 @@ wallet cannot provide a PID, it falls back to the second set:
 ~~~ json
 {
   "id_token": {
-    "requested_credentials": {
-      "essential": true,
-      "credential_sets": [
-        {
-          "pid": {
-            "essential": true,
-            "claims": [{ "path": ["name"] }]
-          }
-        },
-        {
-          "ehic": {
-            "essential": true,
-            "claims": [{ "path": ["ehic_number"] }]
-          }
+    "requested_credential_sets": [
+      {
+        "pid": {
+          "essential": true,
+          "claims": [
+            {"path": ["name"]}
+          ]
         }
-      ]
-    }
+      },
+      {
+        "ehic": {
+          "essential": true,
+          "claims": [
+            {"path": ["ehic_number"]}
+          ]
+        }
+      }
+    ]
   }
 }
 ~~~
@@ -407,21 +401,22 @@ with EHIC as optional (nice-to-have):
 ~~~ json
 {
   "id_token": {
-    "requested_credentials": {
-      "essential": true,
-      "credential_sets": [
-        {
-          "pid": {
-            "essential": true,
-            "claims": [{ "path": ["name"] }]
-          },
-          "ehic": {
-            "essential": false,
-            "claims": [{ "path": ["ehic_number"] }]
-          }
+    "requested_credential_sets": [
+      {
+        "pid": {
+          "essential": true,
+          "claims": [
+            {"path": ["name"]}
+          ]
+        },
+        "ehic": {
+          "essential": false,
+          "claims": [
+            {"path": ["ehic_number"]}
+          ]
         }
-      ]
-    }
+      }
+    ]
   }
 }
 ~~~
@@ -432,21 +427,18 @@ value constraint and an optional claim:
 ~~~ json
 {
   "id_token": {
-    "requested_credentials": {
-      "essential": true,
-      "credential_sets": [
-        {
-          "pid": {
-            "essential": true,
-            "claims": [
-              { "path": ["name"], "essential": true },
-              { "path": ["age_over_18"], "essential": true, "value": true },
-              { "path": ["email"], "essential": false }
-            ]
-          }
+    "requested_credential_sets": [
+      {
+        "pid": {
+          "essential": true,
+          "claims": [
+            {"path": ["name"], "essential": true},
+            {"path": ["age_over_18"], "essential": true, "value": true},
+            {"path": ["email"], "essential": false}
+          ]
         }
-      ]
-    }
+      }
+    ]
   }
 }
 ~~~
@@ -462,21 +454,18 @@ from a PID credential:
 ~~~ json
 {
   "id_token": {
-    "requested_credentials": {
-      "essential": true,
-      "credential_sets": [
-        {
-          "pid": {
-            "essential": true,
-            "claims": [
-              { "path": ["name"] },
-              { "path": ["address", "street_address"] },
-              { "path": ["address", "country"], "value": "SE" }
-            ]
-          }
+    "requested_credential_sets": [
+      {
+        "pid": {
+          "essential": true,
+          "claims": [
+            {"path": ["name"]},
+            {"path": ["address", "street_address"]},
+            {"path": ["address", "country"], "value": "SE"}
+          ]
         }
-      ]
-    }
+      }
+    ]
   }
 }
 ~~~
@@ -722,7 +711,10 @@ nested claims, as might appear in a PID credential:
       "country": "SE"
     },
     "age_over_18": true,
-    "nationalities": ["SE", "NO"]
+    "nationalities": [
+      "SE",
+      "NO"
+    ]
   }
 }
 ~~~
@@ -792,16 +784,14 @@ Content-Type: application/json
 ## Authentication Flow
 
 When the OP receives an OIDC Authentication Request that includes a
-request for credentials (via the "requested_credentials" claims
+request for credentials (via the "requested_credential_sets" claims
 parameter or a registered scope), it MUST:
 
 1.  Validate that each credential type scope corresponds to a key in
     the OP's "credential_presentations_supported" metadata.  The OP
     MUST ignore any credential type scope that is not present in its
     metadata.  If none of the requested credential scopes are
-    supported, the OP MUST proceed with authentication without
-    credential presentation (or return an error if the
-    "requested_credentials" claim was marked essential).
+    supported, the OP MUST return an OIDC error response.
 
 2.  Initiate a credential presentation request to the user's wallet
     for the supported credential types, using the presentation
@@ -944,10 +934,14 @@ would translate to the following DCQL Claims Query entries:
     {
       "id": "ehic",
       "format": "dc+sd-jwt",
-      "meta": { "vct_values": ["urn:credential:ehic"] },
+      "meta": {
+        "vct_values": [
+          "urn:credential:ehic"
+        ]
+      },
       "claims": [
-        { "path": ["name"] },
-        { "path": ["address", "country"], "values": ["SE"] }
+        {"path": ["name"]},
+        {"path": ["address", "country"], "values": ["SE"]}
       ]
     }
   ]
@@ -1167,9 +1161,11 @@ RP, it MUST enforce the following safeguards:
 
 *  The OP MUST only fetch trust lists over HTTPS.
 
-*  The OP SHOULD maintain an allowlist of permitted trust list URIs
-   and MUST reject URIs not on that list.  This prevents an RP from
-   directing the OP to fetch arbitrary resources (SSRF).
+*  The OP MUST NOT dereference arbitrary URIs provided by an RP.
+   The OP MUST restrict which trust list URIs it is willing to fetch
+   to prevent Server-Side Request Forgery (SSRF).  The mechanism for
+   this restriction (e.g., an allowlist, domain policy) is a
+   deployment decision and outside the scope of this specification.
 
 *  The OP MUST impose size limits on fetched trust list documents to
    prevent resource exhaustion.
