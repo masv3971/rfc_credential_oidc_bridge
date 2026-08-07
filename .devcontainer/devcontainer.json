@@ -4,7 +4,7 @@
   "features": {
     "ghcr.io/devcontainers/features/ruby:1": {}
   },
-  "postCreateCommand": "pip install -r lib/requirements.txt && gem install kramdown-rfc",
+  "postCreateCommand": "make lib/main.mk && pip install -r lib/requirements.txt && gem install kramdown-rfc",
   "customizations": {
     "vscode": {
       "extensions": [

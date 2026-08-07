@@ -8,14 +8,23 @@ case "${1:-start}" in
       echo "Already running on port $PORT (pid $(cat "$PIDFILE"))"
       exit 1
     fi
-    python3 -m http.server "$PORT" &
+    python3 -m http.server --bind 127.0.0.1 "$PORT" &
     echo $! > "$PIDFILE"
     echo "Serving on http://localhost:$PORT (pid $!)"
     ;;
   stop)
     if [ -f "$PIDFILE" ]; then
-      kill "$(cat "$PIDFILE")" 2>/dev/null && echo "Stopped" || echo "Not running"
-      rm -f "$PIDFILE"
+      pid=$(cat "$PIDFILE")
+      if ! kill -0 "$pid" 2>/dev/null; then
+        echo "Not running (stale PID file)"
+        rm -f "$PIDFILE"
+      elif kill "$pid" 2>/dev/null; then
+        echo "Stopped (pid $pid)"
+        rm -f "$PIDFILE"
+      else
+        echo "Failed to stop pid $pid" >&2
+        exit 1
+      fi
     else
       echo "Not running"
     fi

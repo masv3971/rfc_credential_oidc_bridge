@@ -213,7 +213,7 @@ trusted_issuers
 trusted_issuer_lists
 : A JSON array of strings, where each string is an HTTPS URI
   identifying a published trust list.  The trust list is a JSON
-  document containing a "issuers" member whose value is a JSON array
+  document containing an "issuers" member whose value is a JSON array
   of issuer identifier strings in the same format as
   "trusted_issuers".  The OP MUST fetch and cache each referenced
   trust list and MUST accept credentials from any issuer appearing in
@@ -593,8 +593,7 @@ valid_from
 valid_until
 : A NumericDate indicating when the credential expires.  The OP
   MUST NOT include credentials that have already expired at the time
-  of presentation unless the RP explicitly indicates willingness to
-  accept expired credentials.
+  of presentation.
 
 verified_at
 : A NumericDate indicating when the OP verified the credential
