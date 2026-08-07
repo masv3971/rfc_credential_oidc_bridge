@@ -67,7 +67,6 @@ normative:
     target: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
 
 informative:
-  RFC7942:
   SD-JWT.VC:
     title: "SD-JWT-based Verifiable Credentials (SD-JWT VC)"
     author:
@@ -1142,45 +1141,6 @@ In summary, this specification provides the plumbing for transporting
 verified credential claims through OIDC.  Everything above that layer
 -- trust decisions, access control, and business rules -- is the domain
 of the deploying parties.
-
-# Implementation Status
-
-This section records the status of known implementations of the
-protocol defined by this specification at the time of posting of this
-Internet-Draft, and is based on a proposal described in {{RFC7942}}.
-The description of implementations in this section is intended to
-assist the IETF in its decision processes in progressing drafts to
-RFCs.
-
-## SUNET Verifiable Credentials Platform
-
-Organization
-: SUNET (Swedish University Computer Network)
-
-Implementation
-: Open-source verifiable credentials platform including issuer,
-  verifier, and wallet components with an API gateway implementing
-  the OpenID4VP-to-OIDC bridge described in this document.
-
-Description
-: The implementation supports SD-JWT VC {{SD-JWT.VC}} and mdoc
-  {{ISO.18013-5}} credential formats, exposes the
-  "presented_credentials" claim via both ID Token and UserInfo
-  endpoint, and has been deployed in production for European higher-
-  education credential use cases (EHIC, PDA1, micro-credentials).
-
-Maturity
-: Production
-
-Coverage
-: Implements all normative requirements of this specification.
-
-Contact
-: Magnus Svensson (masv@sunet.se)
-
-Source Code
-: Available at https://github.com/SUNET/vc (open source,
-  BSD-2-Clause)
 
 # Security Considerations
 
