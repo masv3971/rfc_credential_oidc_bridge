@@ -34,6 +34,7 @@ author:
     email: joel@siros.org
 
 normative:
+  RFC8126:
   RFC8259:
   OpenID.Core:
     title: "OpenID Connect Core 1.0"
@@ -365,17 +366,11 @@ credential set entry.  The structure expresses combinatorial logic
 over credential types:
 
 *  *AND (within a set):* Credentials listed in the same credential
-   set with "essential": true are all required.  The OP MUST fail the
-   authentication if any essential credential in the set cannot be
-   obtained.
-
-*  *OR (between sets):* Multiple credential sets represent
-   alternatives.  The OP MUST attempt to satisfy the sets in order
-   and use the first set that can be fully satisfied.  Only one
-   credential set is returned in the response.
-
-The following is a non-normative example requesting PID AND EHIC
-together (both are required):
+   set with "essential": true are all required for that set to be
+   considered satisfied.  If any essential credential in the set
+   cannot be obtained, the set is not satisfied and the OP proceeds
+   to the next alternative set.  The following is a non-normative
+   example requesting PID AND EHIC together (both are required):
 
 ~~~ json
 {
@@ -400,9 +395,15 @@ together (both are required):
 }
 ~~~
 
-The following is a non-normative example requesting PID OR EHIC
-(either one satisfies the RP).  The OP tries the first set; if the
-wallet cannot provide a PID, it falls back to the second set:
+*  *OR (between sets):* Multiple credential sets represent
+   alternatives.  The OP MUST attempt to satisfy the sets in order
+   and use the first set that can be fully satisfied.  Only one
+   credential set is returned in the response.  If no set can be
+   fully satisfied, the OP MUST return an OIDC error response
+   (e.g., "access_denied").  The following is a non-normative
+   example requesting PID OR EHIC (either one satisfies the RP).
+   The OP tries the first set; if the wallet cannot provide a PID,
+   it falls back to the second set:
 
 ~~~ json
 {
@@ -428,6 +429,14 @@ wallet cannot provide a PID, it falls back to the second set:
   }
 }
 ~~~
+
+This structure is equivalent to Disjunctive Normal Form (DNF): a
+flat list of AND-groups joined by OR.  It cannot directly express
+an OR nested inside an AND.  For example, the requirement
+"(PID OR EHIC) AND PDA1" must be manually expanded into two
+credential sets: {PID, PDA1} OR {EHIC, PDA1}.  Complex boolean
+combinations may therefore require a number of credential sets that
+grows multiplicatively with the number of OR-branches.
 
 The following is a non-normative example requesting PID (required)
 with EHIC as optional (nice-to-have):
@@ -504,11 +513,6 @@ from a PID credential:
 }
 ~~~
 
-If any credential marked essential is missing from the wallet's
-response and no alternative set can be satisfied, the OP MUST return
-an OIDC error response (e.g., "access_denied") rather than a partial
-credential set.
-
 If the wallet presents multiple credentials of the same type (e.g.,
 two EHICs for different family members), the OP returns all of them
 in the array.  The RP is responsible for selecting the appropriate
@@ -525,8 +529,8 @@ definition.  Specifically, the RP MUST:
     the claim was requested as essential and is absent, the RP SHOULD
     treat the authentication as failed.
 
-2.  Parse the "credentials" object and extract the entries relevant
-    to its use case.
+2.  Parse the "presented_credentials" array and extract the
+    Credential Set objects relevant to its use case.
 
 3.  Validate that the expected claims are present in each Credential
     Entry's "claims" object.  If the RP specified a "value"
