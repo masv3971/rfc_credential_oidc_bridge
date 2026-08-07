@@ -5,6 +5,9 @@ category: info
 
 docname: draft-svensson-credential-oidc-bridge-latest
 submissiontype: IETF
+ipr: trust200902
+area: sec
+workgroup: TBD
 number:
 date:
 consensus: true
@@ -31,8 +34,6 @@ author:
     email: joel@siros.org
 
 normative:
-  RFC2119:
-  RFC8174:
   RFC8259:
   OpenID.Core:
     title: "OpenID Connect Core 1.0"
@@ -134,22 +135,56 @@ the participants:
 +--------+                +------------------+
 ~~~
 
-The presentation protocol (step 2-3) is out of scope.
-The OP may use OpenID4VP, DIDComm, or any other mechanism.
+The presentation protocol (steps 2-3) is out of scope for this
+specification.  The OP MAY use OpenID4VP, DIDComm, or any other
+suitable mechanism.
 
-Flow:
+The steps are:
 
-1. RP sends OIDC AuthN Request to OP (credential scopes).
-2. OP requests credential presentation from wallet.
-3. Wallet responds with disclosed credentials.
-4. OP verifies credentials and extracts claims.
-5. OP returns ID Token/UserInfo with presented_credentials.
+1.  The RP sends an OIDC Authentication Request to the OP,
+    including credential type scopes.
 
-# Terminology
+2.  The OP initiates a credential presentation request to the
+    user's wallet.
+
+3.  The wallet responds with the disclosed credentials.
+
+4.  The OP verifies the credentials and extracts claims.
+
+5.  The OP returns an ID Token and/or UserInfo response containing
+    the "presented_credentials" claim.
+
+# Conventions and Definitions
 
 {::boilerplate bcp14-tagged}
 
-# RP (Relying Party) Requirements
+The following terms are used throughout this document:
+
+Relying Party (RP)
+: An OIDC client that consumes claims from the OP.  In this
+  specification, the RP receives credential claims without
+  directly interacting with the wallet.
+
+OpenID Provider (OP)
+: The authorization server that acts as a bridge between the
+  wallet and the RP.  The OP collects credentials from the wallet
+  using a presentation protocol and exposes the resulting claims
+  via standard OIDC mechanisms.
+
+Wallet
+: A user-controlled application that holds digital credentials and
+  can present them to a verifier upon request.
+
+Credential Set
+: A JSON object within the "presented_credentials" array where
+  each key is a credential type scope and each value is an array
+  of Credential Entry objects.
+
+Credential Entry
+: A JSON object representing a single credential presented during
+  the presentation flow, containing metadata and disclosed claims.
+
+# Relying Party Requirements
 
 ## Requesting Credential Claims {#requesting-credential-claims}
 
@@ -546,7 +581,7 @@ operating in regulated environments (e.g., healthcare, finance)
 SHOULD require contractual assurances from the OP in addition to the
 technical signals provided by this specification.
 
-# OP (Verifier/Bridge) Requirements
+# OpenID Provider Requirements
 
 ## The presented_credentials Claim {#presented-credentials-claim}
 
@@ -844,10 +879,12 @@ The binding is:
 For example, given the following discovery metadata:
 
 ~~~ json
-"credential_presentations_supported": {
-  "ehic": {
-    "format": "dc+sd-jwt",
-    "type": "urn:eu.europa.ec.eudi:ehic:1"
+{
+  "credential_presentations_supported": {
+    "ehic": {
+      "format": "dc+sd-jwt",
+      "type": "urn:eu.europa.ec.eudi:ehic:1"
+    }
   }
 }
 ~~~
@@ -861,13 +898,13 @@ and an RP request with `scope=openid ehic pda1`, the OP constructs:
       "id": "ehic",
       "format": "dc+sd-jwt",
       "meta": { "vct_values": ["urn:eu.europa.ec.eudi:ehic:1"] },
-      "claims": [...]
+      "claims": []
     },
     {
       "id": "pda1",
       "format": "dc+sd-jwt",
       "meta": { "vct_values": ["urn:eu.europa.ec.eudi:pda1:1"] },
-      "claims": [...]
+      "claims": []
     }
   ]
 }
@@ -1228,8 +1265,8 @@ Claim Name
 : "presented_credentials"
 
 Claim Description
-: Digital credential claims obtained via an OpenID4VP presentation,
-  structured for consumption by OIDC Relying Parties.
+: Digital credential claims obtained via a credential presentation
+  flow, structured for consumption by OIDC Relying Parties.
 
 Change Controller
 : IETF
