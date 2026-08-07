@@ -34,6 +34,7 @@ author:
     email: joel@siros.org
 
 normative:
+  RFC7519:
   RFC8126:
   RFC8259:
   OpenID.Core:
@@ -66,7 +67,6 @@ normative:
     target: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
 
 informative:
-  RFC7519:
   RFC7942:
   SD-JWT.VC:
     title: "SD-JWT-based Verifiable Credentials (SD-JWT VC)"
@@ -825,9 +825,9 @@ Content-Type: application/json
 
 ## Authentication Flow
 
-When the OP receives an OIDC Authentication Request that includes a
-request for credentials (via the "requested_credential_sets" claims
-parameter or a registered scope), it MUST:
+When the OP receives an OIDC Authentication Request that includes
+credential type scopes (and optionally a "requested_credential_sets"
+claims parameter for fine-grained control), it MUST:
 
 1.  Validate that each credential type scope corresponds to a key in
     the OP's "credential_presentations_supported" metadata.  The OP
