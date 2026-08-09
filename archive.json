@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-06T01:54:45.617086+00:00",
+  "timestamp": "2026-08-09T01:08:57.483090+00:00",
   "repo": "masv3971/rfc_credential_oidc_bridge",
   "labels": [
     {
@@ -50,5 +50,197 @@
     }
   ],
   "issues": [],
-  "pulls": []
+  "pulls": [
+    {
+      "number": 1,
+      "id": "PR_kwDOTuxYJM77ppWq",
+      "title": "Masv/editorial",
+      "url": "https://github.com/masv3971/rfc_credential_oidc_bridge/pull/1",
+      "state": "MERGED",
+      "author": "masv3971",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2026-08-06T14:56:02Z",
+      "updatedAt": "2026-08-07T13:14:15Z",
+      "baseRepository": "masv3971/rfc_credential_oidc_bridge",
+      "baseRefName": "main",
+      "baseRefOid": "7044ee4562bff1f00ab7b1e641b03ea4c266c35c",
+      "headRepository": "masv3971/rfc_credential_oidc_bridge",
+      "headRefName": "masv/editorial",
+      "headRefOid": "4ef1bc07e20b706112eb90853bff70864c76cf64",
+      "closedAt": "2026-08-07T13:14:11Z",
+      "mergedAt": "2026-08-07T13:14:11Z",
+      "mergedBy": "masv3971",
+      "mergeCommit": {
+        "oid": "e0c6c281feba6e5f005cf9c5583d9584c55c5802"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABIqKwFA",
+          "commit": {
+            "abbreviatedOid": "3edfd20"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nThis PR updates the Internet-Draft text for the Credential Presentation \u2192 OIDC Claims bridge (adding/reshaping RP requirements and credential metadata) and adds local development conveniences (devcontainer + simple HTTP server script).\n\n**Changes:**\n- Adds a `serve.sh` helper to start/stop a local HTTP server and ignores its PID file.\n- Adds a devcontainer configuration intended to set up Python + Ruby tooling for building the draft.\n- Expands and restructures draft text (RP requirements section, credential entry fields, trust lists, freshness requirement, and a holder-binding registry).\n\n### Reviewed changes\n\nCopilot reviewed 4 out of 5 changed files in this pull request and generated 5 comments.\n\n<details>\n<summary>Show a summary per file</summary>\n\n| File | Description |\r\n| ---- | ----------- |\r\n| serve.sh | Adds a start/stop wrapper for `python3 -m http.server` with PID tracking. |\r\n| .gitignore | Ignores the `.serve.pid` file created by `serve.sh`. |\r\n| .devcontainer/devcontainer.json | Introduces a devcontainer setup for draft development. |\r\n| .devcontainer/devcontainer-lock.json | Locks the devcontainer Ruby feature to a resolved digest/version. |\r\n| draft-svensson-credential-oidc-bridge.md | Adds/updates specification text for RP requests, credential entry metadata, trust list handling, and registries. |\n</details>\n\n\n\n\n\n\n\n\n---\n\n\ud83d\udca1 <a href=\"/masv3971/rfc_credential_oidc_bridge/new/main?filename=.github/instructions/*.instructions.md\" class=\"Link--inTextBlock\" target=\"_blank\" rel=\"noopener noreferrer\">Add Copilot custom instructions</a> for smarter, more guided reviews. <a href=\"https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot\" class=\"Link--inTextBlock\" target=\"_blank\" rel=\"noopener noreferrer\">Learn how to get started</a>.",
+          "createdAt": "2026-08-06T15:01:06Z",
+          "updatedAt": "2026-08-06T15:01:09Z",
+          "comments": [
+            {
+              "originalPosition": 13,
+              "body": "`python3 -m http.server` binds to all interfaces by default, but the script prints a localhost-only URL. This can unintentionally expose the draft over the network (e.g., in a devcontainer) and the message is misleading. Bind explicitly to 127.0.0.1 and keep the output consistent.",
+              "createdAt": "2026-08-06T15:01:07Z",
+              "updatedAt": "2026-08-06T15:01:09Z"
+            },
+            {
+              "originalPosition": 21,
+              "body": "The `stop` path removes the PID file even if `kill` fails for reasons other than \"not running\" (e.g., permission errors), which can leave the server running but make it impossible to stop via this script. Capture the PID, check whether it's running, and only remove the PID file after a successful stop or confirmed absence.",
+              "createdAt": "2026-08-06T15:01:07Z",
+              "updatedAt": "2026-08-06T15:01:09Z"
+            },
+            {
+              "originalPosition": 7,
+              "body": "`postCreateCommand` runs `pip install -r lib/requirements.txt`, but this repo doesn't have a `lib/` directory until the i-d-template is cloned (via the Makefile rule for `lib/main.mk`). As written, devcontainer creation will fail on a fresh checkout. Initialize the template first before installing requirements.",
+              "createdAt": "2026-08-06T15:01:08Z",
+              "updatedAt": "2026-08-06T15:01:09Z"
+            },
+            {
+              "originalPosition": 69,
+              "body": "Grammar: \"a \\\"issuers\\\" member\" should be \"an \\\"issuers\\\" member\".",
+              "createdAt": "2026-08-06T15:01:08Z",
+              "updatedAt": "2026-08-06T15:01:09Z"
+            },
+            {
+              "originalPosition": 407,
+              "body": "`valid_until` says the OP may include expired credentials if the RP \"explicitly indicates willingness to accept expired credentials\", but the document doesn't define any request signal/parameter for that. Either define such a parameter in the RP request structure, or remove the exception to avoid an unimplementable requirement.",
+              "createdAt": "2026-08-06T15:01:08Z",
+              "updatedAt": "2026-08-06T15:01:09Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABIvRdHA",
+          "commit": {
+            "abbreviatedOid": "75bd438"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nCopilot reviewed 4 out of 5 changed files in this pull request and generated no new comments.\n\n\n\n\n<details>\n<summary>Suppressed comments (4)</summary>\n\n**draft-svensson-credential-oidc-bridge.md:161**\n* This section says the RP MUST include credential type scopes, but later the spec says a request for credentials can be made via the \"requested_credentials\" claims parameter or a registered scope. As written, it's unclear whether scopes are mandatory or whether `requested_credentials.credential_sets` alone is sufficient to request credential types. Please align the RP requirements text with the rest of the document by allowing either mechanism (scopes and/or credential_sets).\n```\nAn RP that wishes to receive credential data via this bridge MUST\ninclude the appropriate credential type scopes in the OIDC\nAuthentication Request.  Each scope corresponds to a credential type\n(e.g., \"ehic\", \"pda1\").  The presence of any credential type scope\nsignals to the OP that the \"requested_credentials\" claim parameter\n```\n**draft-svensson-credential-oidc-bridge.md:190**\n* The \"value\" constraint text says the OP \"MUST reject the credential\" if the value doesn't match. Elsewhere (Credential Mapping) the document describes this as the credential \"not satisfying the request\", which is more precise (especially when there are alternative credential sets or multiple credentials of the same type). Consider using the same phrasing here for consistency.\n```\n   value\n   : A JSON value that the disclosed claim MUST exactly equal.\n     If present, the OP MUST verify that the disclosed claim value\n     matches and MUST reject the credential if it does not.\n     If omitted, any disclosed value is accepted.\n```\n**draft-svensson-credential-oidc-bridge.md:669**\n* In the Credential Entry Object definition, the OP MUST set `type` based on the presented credential. Here, the text says the OP MUST use the mapped \"type\" value when constructing Credential Entry objects, which could be read as overriding the credential-derived value. It would be clearer to say the mapping is used to translate scope -> wallet query, and that the returned Credential Entry `type` is populated from the credential (and should match the mapping).\n```\nand the \"type\" value that will appear in the corresponding Credential\nEntry.  The OP MUST use the \"type\" value from this mapping when\nconstructing Credential Entry objects, enabling the OP to translate\nthe RP's scope request into the correct credential query (e.g., a\nDCQL query with the appropriate \"vct_values\" or \"doctype_value\")\n```\n**serve.sh:13**\n* The script writes the PID file and prints a success message immediately after starting the server in the background. If `python3 -m http.server` fails to bind (e.g., port already in use) the process may exit right away, leaving a stale PID file and a misleading \"Serving on...\" message. Capture `$!`, verify the process is still alive before writing the PID file, and fail fast on startup errors.\n```\n    python3 -m http.server --bind 127.0.0.1 \"$PORT\" &\n    echo $! > \"$PIDFILE\"\n    echo \"Serving on http://localhost:$PORT (pid $!)\"\n```\n</details>\n\n",
+          "createdAt": "2026-08-07T08:57:59Z",
+          "updatedAt": "2026-08-07T08:57:59Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABIv3urQ",
+          "commit": {
+            "abbreviatedOid": "40b7377"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nCopilot reviewed 4 out of 5 changed files in this pull request and generated no new comments.\n\n\n\n\n<details>\n<summary>Suppressed comments (4)</summary>\n\n**serve.sh:27**\n* `kill -0 \"$pid\"` / `kill \"$pid\"` should use `--` (to prevent option parsing) and should avoid killing an unrelated process if the PID file is stale/reused. Validate the PID is numeric and confirm it\u2019s the expected http.server process before sending the signal.\n```\n      pid=$(cat \"$PIDFILE\")\n      if ! kill -0 \"$pid\" 2>/dev/null; then\n        echo \"Not running (stale PID file)\"\n        rm -f \"$PIDFILE\"\n      elif kill \"$pid\" 2>/dev/null; then\n```\n**serve.sh:2**\n* For consistency with the repo\u2019s other shell script(s) and to avoid silent failures, enable strict bash mode (e.g., `set -euo pipefail`) near the top of this script (see tag-release.sh:2).\n```\n#!/bin/bash\nPORT=\"${PORT:-8000}\"\n```\n**serve.sh:10**\n* The PID-file check can be tricked into calling `kill` with an option-like PID (e.g., a PID file containing \"-TERM\"), and it can also treat an unrelated process with a reused PID as \u201calready running\u201d. Read/validate the PID and verify it matches the expected http.server command before exiting.\n\nThis issue also appears on line 23 of the same file.\n```\n  start)\n    if [ -f \"$PIDFILE\" ] && kill -0 \"$(cat \"$PIDFILE\")\" 2>/dev/null; then\n      echo \"Already running on port $PORT (pid $(cat \"$PIDFILE\"))\"\n      exit 1\n    fi\n```\n**draft-svensson-credential-oidc-bridge.md:1172**\n* This bullet mixes SHOULD and MUST in a way that becomes non-implementable: if maintaining an allowlist is only SHOULD, you can\u2019t also require rejecting URIs not on that allowlist. Consider making the allowlist requirement a MUST (since rejection implies one exists).\n```\n*  The OP SHOULD maintain an allowlist of permitted trust list URIs\n   and MUST reject URIs not on that list.  This prevents an RP from\n   directing the OP to fetch arbitrary resources (SSRF).\n```\n</details>\n\n",
+          "createdAt": "2026-08-07T10:29:13Z",
+          "updatedAt": "2026-08-07T10:29:13Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABIwCMqA",
+          "commit": {
+            "abbreviatedOid": "38cd634"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nCopilot reviewed 4 out of 5 changed files in this pull request and generated no new comments.\n\n\n\n\n<details>\n<summary>Suppressed comments (5)</summary>\n\n**serve.sh:28**\n* `stop` trusts the PID file blindly and may send SIGTERM to an unrelated process if the PID has been reused or the PID file was tampered with. It should validate the PID file contents and ensure the PID still refers to the expected `python3 -m http.server` process before killing it.\n```\n    if [ -f \"$PIDFILE\" ]; then\n      pid=$(cat \"$PIDFILE\")\n      if ! kill -0 \"$pid\" 2>/dev/null; then\n        echo \"Not running (stale PID file)\"\n        rm -f \"$PIDFILE\"\n      elif kill \"$pid\" 2>/dev/null; then\n        echo \"Stopped (pid $pid)\"\n```\n**serve.sh:2**\n* This script doesn\u2019t enable Bash strict mode, unlike the existing tag-release.sh. Without `set -euo pipefail`, failures (e.g., failed `cat`, unset vars) can be silently ignored and lead to confusing behavior.\n```\n#!/bin/bash\nPORT=\"${PORT:-8000}\"\n```\n**draft-svensson-credential-oidc-bridge.md:130**\n* The ASCII architecture diagram is currently malformed (missing/shifted column separators and a truncated \"+----------+\" line), which breaks rendering and makes the flow hard to read. Restoring consistent box borders/spacing fixes the diagram.\n```\n+--------+              +------------------+            +----------+\n|        | 1. OIDC AuthN  |        OP        | 2. Present  |          |\n|   RP   | -------------> |     (Bridge)     | ----------> |  Wallet  |\n|        |              |                | <---------- |          |\n|        |              |                | 3. Response |          |\n|        |              |                |           +----------+\n```\n**.devcontainer/devcontainer.json:7**\n* Using the `pip` shim directly can install into an unexpected interpreter environment (or fail if `pip` isn\u2019t on PATH). Using `python3 -m pip` ensures the packages are installed for the devcontainer\u2019s Python image.\n```\n  \"postCreateCommand\": \"make lib/main.mk && pip install -r lib/requirements.txt && gem install kramdown-rfc\",\n```\n**serve.sh:10**\n* `start` treats any live PID in .serve.pid as \u201calready running\u201d. If the PID has been reused by an unrelated process, `start` will refuse to start the server until the PID file is manually removed. Verifying the PID refers to the expected `python3 -m http.server` process (and otherwise treating it as stale) avoids false positives.\n\nThis issue also appears on line 22 of the same file.\n```\n    if [ -f \"$PIDFILE\" ] && kill -0 \"$(cat \"$PIDFILE\")\" 2>/dev/null; then\n      echo \"Already running on port $PORT (pid $(cat \"$PIDFILE\"))\"\n      exit 1\n    fi\n```\n</details>\n\n",
+          "createdAt": "2026-08-07T10:52:50Z",
+          "updatedAt": "2026-08-07T10:52:50Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABIwJCPg",
+          "commit": {
+            "abbreviatedOid": "a8f8ed4"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nCopilot reviewed 4 out of 5 changed files in this pull request and generated no new comments.\n\n\n\n\n<details>\n<summary>Suppressed comments (3)</summary>\n\n**serve.sh:26**\n* `stop` will send SIGTERM to whatever process currently has the PID in .serve.pid. If the PID has been recycled, this can terminate an unrelated process. It\u2019s safer to verify the PID looks like the server process before killing.\n```\n    if [ -f \"$PIDFILE\" ]; then\n      pid=$(cat \"$PIDFILE\")\n      if ! kill -0 \"$pid\" 2>/dev/null; then\n        echo \"Not running (stale PID file)\"\n        rm -f \"$PIDFILE\"\n```\n**serve.sh:10**\n* The PID file check only verifies that a PID exists; if the PID is reused by the OS (or the PID file is tampered with), `start` can incorrectly refuse to start and `stop` can kill an unrelated process. Consider verifying that the PID belongs to the `python3 -m http.server` process before treating it as running.\n\nThis issue also appears on line 22 of the same file.\n```\n    if [ -f \"$PIDFILE\" ] && kill -0 \"$(cat \"$PIDFILE\")\" 2>/dev/null; then\n      echo \"Already running on port $PORT (pid $(cat \"$PIDFILE\"))\"\n      exit 1\n```\n**draft-svensson-credential-oidc-bridge.md:175**\n* This section says the RP MUST \"use one or both\" mechanisms, but later the claims-based mechanism still requires including the corresponding credential type scopes. As written, it implies a claims-only request is valid even though it isn\u2019t. Clarifying the requirement up front avoids a contradictory reading.\n```\nAn RP that wishes to receive credential data via this bridge MUST\nuse one or both of the following mechanisms in the OIDC\nAuthentication Request:\n\n*  *Scope-based (simple):* Include credential type scopes in the\n```\n</details>\n\n",
+          "createdAt": "2026-08-07T11:09:57Z",
+          "updatedAt": "2026-08-07T11:09:57Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABIwSexA",
+          "commit": {
+            "abbreviatedOid": "4bff36c"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nCopilot reviewed 4 out of 5 changed files in this pull request and generated 1 comment.\n\n\n\n\n<details>\n<summary>Suppressed comments (3)</summary>\n\n**serve.sh:24**\n* `stop` uses the PID from $PIDFILE without validating it. As with `start`, an unexpected value (e.g., `-1`) can cause `kill` to signal an unintended set of processes. Add a numeric PID check and treat invalid contents as a stale PID file.\n```\n      pid=$(cat \"$PIDFILE\")\n      if ! kill -0 \"$pid\" 2>/dev/null; then\n```\n**draft-svensson-credential-oidc-bridge.md:791**\n* This sentence says a credential request can be indicated by the `requested_credential_sets` claims parameter *or* a registered scope, but the RP Requirements section states scopes are always required. This is internally inconsistent; either scopes are mandatory or the OP needs a path that works without them.\n```\nWhen the OP receives an OIDC Authentication Request that includes a\nrequest for credentials (via the \"requested_credential_sets\" claims\nparameter or a registered scope), it MUST:\n```\n**serve.sh:3**\n* PIDFILE is relative to the current working directory, so `start` and `stop` will look at different PID files if the script is invoked from different directories (and may leave orphaned servers). Prefer anchoring the PID file to the script directory (while still allowing an override via $PIDFILE).\n```\nPIDFILE=\".serve.pid\"\n```\n</details>\n\n",
+          "createdAt": "2026-08-07T11:35:26Z",
+          "updatedAt": "2026-08-07T11:35:26Z",
+          "comments": [
+            {
+              "originalPosition": 10,
+              "body": "The PID read from $PIDFILE is used directly in `kill`. If the PID file is corrupted (e.g., contains a negative number like `-1`), `kill` can target a process group or all processes the user can signal. Validate the PID is a positive integer before using it.\n\nThis issue also appears on line 23 of the same file.",
+              "createdAt": "2026-08-07T11:35:26Z",
+              "updatedAt": "2026-08-07T11:35:26Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABIwZVew",
+          "commit": {
+            "abbreviatedOid": "35e921a"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nCopilot reviewed 4 out of 5 changed files in this pull request and generated 1 comment.\n\n\n\n\n<details>\n<summary>Suppressed comments (2)</summary>\n\n**serve.sh:4**\n* PID file name is not port-specific, so running `PORT=... ./serve.sh start` on a different port will still reuse `.serve.pid` and can (a) report the wrong port as already running and (b) cause `stop` to kill the wrong instance. Also, other bash scripts in this repo use `set -euo pipefail` (see `tag-release.sh:2`), but this new script does not.\n```\n#!/bin/bash\nPORT=\"${PORT:-8000}\"\nPIDFILE=\".serve.pid\"\n\n```\n**draft-svensson-credential-oidc-bridge.md:529**\n* The claim is now defined as a top-level `presented_credentials` array of Credential Set objects (Section {#presented-credentials-array}), but this RP guidance still tells implementers to parse a `\"credentials\"` object, which no longer exists in the defined structure.\n```\n2.  Parse the \"credentials\" object and extract the entries relevant\n    to its use case.\n```\n</details>\n\n",
+          "createdAt": "2026-08-07T11:51:13Z",
+          "updatedAt": "2026-08-07T11:51:13Z",
+          "comments": [
+            {
+              "originalPosition": 16,
+              "body": "This draft cites `{{!RFC8126}}` (e.g., in the new holder-binding registry section), but RFC8126 is not listed in the `normative:` references. This will typically produce an unresolved reference during rendering.",
+              "createdAt": "2026-08-07T11:51:13Z",
+              "updatedAt": "2026-08-07T11:51:13Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABIwwEig",
+          "commit": {
+            "abbreviatedOid": "079023b"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nCopilot reviewed 4 out of 5 changed files in this pull request and generated no new comments.\n\n\n\n\n<details>\n<summary>Suppressed comments (5)</summary>\n\n**serve.sh:27**\n* `stop` will kill whatever process currently has the PID from the PID file; if the PID was reused, this can terminate an unrelated process. Consider validating the command line matches the expected `python3 -m http.server` before sending the signal.\n```\n      pid=$(cat \"$PIDFILE\")\n      if ! kill -0 \"$pid\" 2>/dev/null; then\n        echo \"Not running (stale PID file)\"\n        rm -f \"$PIDFILE\"\n      elif kill \"$pid\" 2>/dev/null; then\n```\n**serve.sh:3**\n* For consistency with the repo\u2019s other Bash scripts (e.g., tag-release.sh), this script should enable strict mode so failures don\u2019t silently continue and produce misleading PID/state handling.\n```\n#!/bin/bash\nPORT=\"${PORT:-8000}\"\nPIDFILE=\".serve.pid\"\n```\n**serve.sh:10**\n* The PID file check can produce a false positive if the PID has been recycled for an unrelated process, causing `start` to refuse to run. It\u2019s safer to also verify the PID belongs to the expected `python3 -m http.server` process (otherwise treat the PID file as stale).\n\nThis issue also appears on line 23 of the same file.\n```\n    if [ -f \"$PIDFILE\" ] && kill -0 \"$(cat \"$PIDFILE\")\" 2>/dev/null; then\n      echo \"Already running on port $PORT (pid $(cat \"$PIDFILE\"))\"\n      exit 1\n    fi\n```\n**draft-svensson-credential-oidc-bridge.md:705**\n* `valid_from`/`valid_until`/`verified_at` define on-the-wire field semantics using NumericDate; this is a normative dependency on RFC 7519. Use a normative citation marker so tooling classifies the reference correctly.\n```\nvalid_from\n: A NumericDate (as defined in {{RFC7519}}) indicating when the\n  credential became valid (i.e., the issuance or activation date).\n```\n**draft-svensson-credential-oidc-bridge.md:830**\n* This conflicts with the RP requirements in Section 2 (which state credential type scopes are always required). If `requested_credential_sets` can be used without scopes, that earlier requirement needs to change; otherwise, the OP flow should describe `requested_credential_sets` as optional alongside credential scopes.\n```\nWhen the OP receives an OIDC Authentication Request that includes a\nrequest for credentials (via the \"requested_credential_sets\" claims\nparameter or a registered scope), it MUST:\n```\n</details>\n\n",
+          "createdAt": "2026-08-07T12:50:16Z",
+          "updatedAt": "2026-08-07T12:50:16Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABIw33mg",
+          "commit": {
+            "abbreviatedOid": "1a6f826"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nCopilot reviewed 4 out of 5 changed files in this pull request and generated no new comments.\n\n\n\n\n<details>\n<summary>Suppressed comments (4)</summary>\n\n**draft-svensson-credential-oidc-bridge.md:891**\n* This example\u2019s discovery metadata only defines `ehic`, but the following text and DCQL example assume the OP can also map `pda1` from `scope=openid ehic pda1`. As written, the OP would have no metadata entry to construct the `pda1` query.\n```\n    \"ehic\": {\n      \"format\": \"dc+sd-jwt\",\n      \"type\": \"urn:eu.europa.ec.eudi:ehic:1\"\n    }\n  }\n```\n**serve.sh:27**\n* `stop` will send SIGTERM to whatever PID is in `.serve.pid`. If the PID has been reused, this can terminate an unrelated process. Add a sanity check that the PID is a `python3 -m http.server` process (or remove the PID file and refuse to stop) before calling `kill`.\n```\n      pid=$(cat \"$PIDFILE\")\n      if ! kill -0 \"$pid\" 2>/dev/null; then\n        echo \"Not running (stale PID file)\"\n        rm -f \"$PIDFILE\"\n      elif kill \"$pid\" 2>/dev/null; then\n```\n**draft-svensson-credential-oidc-bridge.md:39**\n* The document still uses `{::boilerplate bcp14-tagged}` (which relies on RFC 2119 / RFC 8174 for normative keyword definitions), but those references were removed from the `normative:` references list. This can break reference generation and leaves the BCP14 boilerplate without its required citations.\n\nThis issue also appears on line 887 of the same file.\n```\nnormative:\n  RFC7519:\n  RFC8126:\n  RFC8259:\n```\n**serve.sh:10**\n* The PID file check only tests whether the PID exists. If the PID is reused by an unrelated process, `start` will refuse to run even though the server is not running. Consider validating that the PID corresponds to a `python3 -m http.server` process before treating it as already running.\n\nThis issue also appears on line 23 of the same file.\n```\n    if [ -f \"$PIDFILE\" ] && kill -0 \"$(cat \"$PIDFILE\")\" 2>/dev/null; then\n      echo \"Already running on port $PORT (pid $(cat \"$PIDFILE\"))\"\n      exit 1\n```\n</details>\n\n",
+          "createdAt": "2026-08-07T13:08:21Z",
+          "updatedAt": "2026-08-07T13:08:21Z",
+          "comments": []
+        }
+      ]
+    }
+  ]
 }
