@@ -92,7 +92,6 @@ those claims to Relying Parties as standard OIDC claims, enabling
 existing OIDC deployments to consume digital credentials without
 implementing any wallet-facing presentation protocol.
 
-
 --- middle
 
 # Introduction
@@ -190,33 +189,39 @@ Credential Entry
 
 An RP that wishes to receive credential data via this bridge MUST
 include credential type scopes in the OIDC Authentication Request
-(e.g., `scope=openid ehic pda1`).  Scopes are always required
-because they tell the OP which credential types to collect.  The RP
-MAY additionally include a "requested_credential_sets" claims
-parameter for fine-grained control.
+(e.g., `scope=openid ehic pda1`).  This specification defines two
+request modes:
 
-*  *Scope-based (simple):* Include only credential type scopes.
-   The OP requests all available claims for those credential types
-   and returns them in the response.  This approach requires no
-   additional parameters but offers no selective disclosure or
-   value constraints from the RP side.
+*  *Scope-based (REQUIRED to support):* the RP includes only
+   credential type scopes.  The OP applies a pre-registered query
+   per scope (see {{credential-mapping}}) and returns the claims
+   configured for that credential type.  Every OP that implements
+   this specification MUST support this mode.
 
-*  *Scope + claims-based (detailed):* Include credential type scopes
-   AND a "requested_credential_sets" member inside the OIDC "claims"
-   request parameter (within the "id_token" or "userinfo" entry).
-   This gives the RP fine-grained control: which specific claims to
-   request, whether each is essential or optional, value constraints,
-   and trusted issuer requirements.
+*  *DCQL-based (OPTIONAL):* the RP additionally supplies a
+   "dcql_query" member inside the OIDC "claims" request parameter.
+   The value is a DCQL query {{OpenID4VP}} constrained to the
+   profile defined in {{dcql-based-requests}}.
 
-Scopes identify which credentials to collect, and the
-"requested_credential_sets" claims parameter (when present) specifies
-how to collect them.  If only scopes are present without a
-"requested_credential_sets" claims parameter, the OP requests all
-available claims for the given credential types.
+Deployments operating under trust frameworks that require pre-
+registered credential queries (for example, EUDI and the Swiss
+Trust Framework) MUST NOT advertise "dcql_query_supported" as
+`true`.  An RP that sends a "dcql_query" to such an OP will
+receive an "invalid_request" error per {{dcql-based-requests}}.
+An RP MUST consult the OP's discovery metadata (see
+{{discovery}}) to determine whether the DCQL-based mode is
+supported before including a "dcql_query".
+
+Scopes identify which credentials to collect; the "dcql_query"
+member, when present, refines how they are collected.  If only
+scopes are present, the OP applies its pre-registered mapping for
+each scope.
+
+### Scope-Based Requests {#scope-based-requests}
 
 The following is a non-normative example of a scope-based request
-(no claims parameter).  The RP requests EHIC and PDA1 credentials
-with all available claims:
+(no "claims" parameter).  The RP requests EHIC and PDA1 credentials
+using the OP's pre-registered mapping:
 
 ~~~ http
 GET /authorize?
@@ -227,268 +232,288 @@ GET /authorize?
   &nonce=n-0S6_WzA2Mj HTTP/1.1
 ~~~
 
-The requested scopes directly correlate to the keys in credential
-sets returned by the OP.  For example, if the RP requests scopes
-"ehic" and "pda1", the OP will return a credential set containing
+The requested scopes directly correlate to the keys used in the
+Credential Set returned by the OP.  For example, if the RP requests
+scopes "ehic" and "pda1", the resulting Credential Set contains
 "ehic" and "pda1" entries.
 
-The RP MAY additionally use the "claims" request parameter to specify
-which individual claims within a credential type are desired,
-enabling selective disclosure.
+In scope-based mode the RP cannot express selective disclosure,
+value constraints, or issuer restrictions on a per-request basis;
+the OP applies its own policy.  RPs that need such control MAY use
+the DCQL-based mode ({{dcql-based-requests}}) where supported by
+the OP.
 
-The "claims" member within a credential type entry is a JSON array
-of claim query objects.  Each claim query object contains the
-following members:
+### DCQL-Based Requests {#dcql-based-requests}
 
-path
-: REQUIRED.  A non-empty JSON array of strings representing the
-  path to the claim within the credential, following the Claims
-  Path Pointer syntax defined in Section 7 of {{OpenID4VP}}.
-  For top-level claims the array contains a single string
-  (e.g., `["name"]`).  For nested claims the array contains one
-  element per level (e.g., `["address", "street_address"]`).
+An RP MAY supply a "dcql_query" member inside the OIDC "claims"
+request parameter as permitted by Section 5.5.1 of {{OpenID.Core}}.
+The "dcql_query" value MUST be a DCQL query object as defined in
+Section 6 of {{OpenID4VP}}, restricted to the profile defined in
+this section.
 
-essential
-: OPTIONAL.  A boolean indicating whether the claim MUST be
-  disclosed.  Defaults to true if omitted.
+An OP that supports the DCQL-based mode MUST advertise this in its
+discovery metadata via "dcql_query_supported" (see {{discovery}}).
+If the OP does not support the DCQL-based mode and the RP supplies
+a "dcql_query", the OP MUST return an OIDC error response with
+error code "invalid_request".
 
-value
-: OPTIONAL.  A JSON value that the disclosed claim MUST exactly
-  equal.  If present, the OP MUST verify that the disclosed claim
-  value matches and MUST treat the credential as not satisfying
-  the request if it does not.  If omitted, any disclosed value is
-  accepted.
+The following DCQL features are permitted in this profile:
 
-The "requested_credential_sets" member is placed inside the OIDC
-"claims" request parameter as permitted by Section 5.5.1 of
-{{OpenID.Core}}.  Its value is a JSON array of credential set
-objects, each representing one combination of credentials to request.
+*  At the top level: "credentials" (REQUIRED) and "credential_sets"
+   (OPTIONAL).
+*  Within each Credential Query: "id", "format", "meta", "claims",
+   "trusted_authorities", and
+   "require_cryptographic_holder_binding".
+*  Within "meta": "vct_values" (for `dc+sd-jwt`) or "doctype_value"
+   (for `mso_mdoc`).
+*  Within each entry of "claims": "path" and "values".
+*  "trusted_authorities" uses the entry shape `{"type", "values"}`
+   defined in Section 6.1.4 of {{OpenID4VP}}.
 
-Each credential type entry within a credential set MAY also include
-the following optional members to express trust requirements:
+The DCQL "claim_sets" member MUST NOT be used in this profile.
+RPs that need alternation between different combinations of claims
+SHOULD express it as multiple Credential Queries linked via
+"credential_sets".
 
-trusted_issuers
-: A JSON array of strings, where each string is an issuer identifier.
-  When present, the OP MUST only accept credentials issued by one of
-  the listed issuers.  If the wallet presents a credential from an
-  issuer not in this list, the OP MUST treat it as not satisfying the
-  request.  If omitted, the OP applies its own issuer policy.
+When present, the "claims" array of a Credential Query MUST be
+non-empty (see Section 6.1 of {{OpenID4VP}}).  Absence of "claims"
+means no specific claims are requested for that Credential Query;
+the OP then applies the pre-registered claim set for the credential
+type, matching the semantics of scope-based mode.
 
-trusted_issuer_lists
-: A JSON array of strings, where each string is an HTTPS URI
-  identifying a published trust list.  The trust list is a JSON
-  document containing an "issuers" member whose value is a JSON array
-  of issuer identifier strings in the same format as
-  "trusted_issuers".  The OP MUST fetch and cache each referenced
-  trust list and MUST accept credentials from any issuer appearing in
-  at least one of the referenced lists.  When both "trusted_issuers"
-  and "trusted_issuer_lists" are present, the effective set of
-  trusted issuers is the union of the explicitly listed issuers and
-  the issuers from all referenced lists.  If both members are omitted,
-  the OP applies its own issuer policy.
+The "id" of each Credential Query MUST match a key in the OP's
+"credential_presentations_supported" discovery metadata (see
+{{credential-mapping}}).  If the OP receives an unknown "id", it
+MUST return an OIDC error response with error code
+"invalid_request".
+
+The "credential_sets" member expresses combinatorial logic over
+Credential Queries as defined in Section 6.3 of {{OpenID4VP}}.
+Each Credential Set entry contains an "options" array listing
+alternative AND-groups of Credential Query "id"s, plus an OPTIONAL
+"id" and OPTIONAL "required" boolean (default `true`).  If
+"credential_sets" is present, the OP MUST evaluate the alternation
+per Section 6.3 of {{OpenID4VP}} and return, for each satisfied
+Credential Set, one Credential Set object within the
+"presented_credentials" claim (see {{presented-credentials-array}})
+whose members are the Credential Queries in the matched AND-group.
+The OPTIONAL "id" of the Credential Set entry MAY be echoed by the
+OP in the response to help the RP identify which alternative was
+satisfied (see {{presented-credentials-array}}).
+
+If "credential_sets" is absent, the OP treats all Credential
+Queries as required, matching the DCQL default behaviour.
+
+Trusted authority handling:
+
+*  When a Credential Query includes "trusted_authorities", the OP
+   MUST only accept a credential for that query if it chains to at
+   least one of the listed authorities.  Credentials that do not
+   MUST be treated as not satisfying the query.
+*  If "trusted_authorities" is absent, the OP applies its own
+   issuer policy.
+*  Security requirements for dereferencing external trust list
+   references (e.g., "etsi_tl", "openid_federation") are given in
+   {{trust-list-fetching}}.
 
 The following is a non-normative example requesting a PID from a
-specific set of trusted issuers:
+specific pair of trusted authorities using the OpenID Federation
+authority type:
 
 ~~~ json
 {
   "id_token": {
-    "requested_credential_sets": [
-      {
-        "pid": {
-          "essential": true,
+    "dcql_query": {
+      "credentials": [
+        {
+          "id": "pid",
+          "format": "dc+sd-jwt",
+          "meta": {
+            "vct_values": ["urn:eu.europa.ec.eudi:pid:1"]
+          },
           "claims": [
-            {"path": ["name"]},
+            {"path": ["family_name"]},
+            {"path": ["given_name"]},
             {"path": ["birth_date"]}
           ],
-          "trusted_issuers": [
-            "https://pid.example.gov.se",
-            "https://pid.example.gov.no"
+          "trusted_authorities": [
+            {
+              "type": "openid_federation",
+              "values": [
+                "https://pid.example.gov.se",
+                "https://pid.example.gov.no"
+              ]
+            }
           ]
         }
-      }
-    ]
+      ]
+    }
   }
 }
 ~~~
 
-The following is a non-normative example using trust lists to accept
-PID and EHIC credentials from all issuers recognized by the EU trust
-list, without enumerating each issuer individually:
+The following is a non-normative example using an ETSI Trust List
+to accept PID and EHIC credentials from any issuer recognised by
+the list, without enumerating each issuer individually:
 
 ~~~ json
 {
   "id_token": {
-    "requested_credential_sets": [
-      {
-        "pid": {
-          "essential": true,
+    "dcql_query": {
+      "credentials": [
+        {
+          "id": "pid",
+          "format": "dc+sd-jwt",
+          "meta": {"vct_values": ["urn:eu.europa.ec.eudi:pid:1"]},
           "claims": [
-            {"path": ["name"]},
+            {"path": ["family_name"]},
             {"path": ["birth_date"]}
           ],
-          "trusted_issuer_lists": [
-            "https://trust.eu.example.org/pid-issuers.json"
+          "trusted_authorities": [
+            {
+              "type": "etsi_tl",
+              "values": ["https://trust.eu.example.org/tsl.xml"]
+            }
           ]
         },
-        "ehic": {
-          "essential": true,
+        {
+          "id": "ehic",
+          "format": "dc+sd-jwt",
+          "meta": {"vct_values": ["urn:eu.europa.ec.eudi:ehic:1"]},
           "claims": [
             {"path": ["ehic_number"]}
           ],
-          "trusted_issuer_lists": [
-            "https://trust.eu.example.org/ehic-issuers.json"
+          "trusted_authorities": [
+            {
+              "type": "etsi_tl",
+              "values": ["https://trust.eu.example.org/tsl.xml"]
+            }
           ]
         }
-      }
-    ]
+      ]
+    }
   }
 }
 ~~~
 
-The following is a non-normative example of a trust list document
-served at the URI referenced above:
-
-~~~ json
-{
-  "issuers": [
-    "https://pid.example.gov.se",
-    "https://pid.example.gov.no",
-    "https://pid.example.gov.de",
-    "https://pid.example.gov.fr"
-  ]
-}
-~~~
-
-The "requested_credential_sets" array MUST contain at least one
-credential set entry.  The structure expresses combinatorial logic
-over credential types:
-
-*  *AND (within a set):* Credentials listed in the same credential
-   set with "essential": true are all required for that set to be
-   considered satisfied.  If any essential credential in the set
-   cannot be obtained, the set is not satisfied and the OP proceeds
-   to the next alternative set.  The following is a non-normative
-   example requesting PID AND EHIC together (both are required):
+The following is a non-normative example expressing "PID AND EHIC
+together":
 
 ~~~ json
 {
   "id_token": {
-    "requested_credential_sets": [
-      {
-        "pid": {
-          "essential": true,
-          "claims": [
-            {"path": ["name"]}
-          ]
+    "dcql_query": {
+      "credentials": [
+        {
+          "id": "pid",
+          "format": "dc+sd-jwt",
+          "meta": {"vct_values": ["urn:eu.europa.ec.eudi:pid:1"]},
+          "claims": [{"path": ["family_name"]}]
         },
-        "ehic": {
-          "essential": true,
-          "claims": [
-            {"path": ["ehic_number"]}
-          ]
+        {
+          "id": "ehic",
+          "format": "dc+sd-jwt",
+          "meta": {"vct_values": ["urn:eu.europa.ec.eudi:ehic:1"]},
+          "claims": [{"path": ["ehic_number"]}]
         }
-      }
-    ]
+      ],
+      "credential_sets": [
+        {
+          "id": "pid_and_ehic",
+          "options": [["pid", "ehic"]]
+        }
+      ]
+    }
   }
 }
 ~~~
 
-*  *OR (between sets):* Multiple credential sets represent
-   alternatives.  The OP MUST attempt to satisfy the sets in order
-   and use the first set that can be fully satisfied.  Only one
-   credential set is returned in the response.  If no set can be
-   fully satisfied, the OP MUST return an OIDC error response
-   (e.g., "access_denied").  The following is a non-normative
-   example requesting PID OR EHIC (either one satisfies the RP).
-   The OP tries the first set; if the wallet cannot provide a PID,
-   it falls back to the second set:
+The following is a non-normative example expressing "PID OR EHIC"
+using two alternatives.  Only the AND-group that was satisfied
+appears in the corresponding Credential Set in the response:
 
 ~~~ json
 {
   "id_token": {
-    "requested_credential_sets": [
-      {
-        "pid": {
-          "essential": true,
-          "claims": [
-            {"path": ["name"]}
-          ]
-        }
-      },
-      {
-        "ehic": {
-          "essential": true,
-          "claims": [
-            {"path": ["ehic_number"]}
-          ]
-        }
-      }
-    ]
-  }
-}
-~~~
-
-This structure is equivalent to Disjunctive Normal Form (DNF): a
-flat list of AND-groups joined by OR.  It cannot directly express
-an OR nested inside an AND.  For example, the requirement
-"(PID OR EHIC) AND PDA1" must be manually expanded into two
-credential sets: {PID, PDA1} OR {EHIC, PDA1}.  Complex boolean
-combinations may therefore require a number of credential sets that
-grows multiplicatively with the number of OR-branches.
-
-The following is a non-normative example requesting PID (required)
-with EHIC as optional (nice-to-have):
-
-~~~ json
-{
-  "id_token": {
-    "requested_credential_sets": [
-      {
-        "pid": {
-          "essential": true,
-          "claims": [
-            {"path": ["name"]}
-          ]
+    "dcql_query": {
+      "credentials": [
+        {
+          "id": "pid",
+          "format": "dc+sd-jwt",
+          "meta": {"vct_values": ["urn:eu.europa.ec.eudi:pid:1"]},
+          "claims": [{"path": ["family_name"]}]
         },
-        "ehic": {
-          "essential": false,
-          "claims": [
-            {"path": ["ehic_number"]}
-          ]
+        {
+          "id": "ehic",
+          "format": "dc+sd-jwt",
+          "meta": {"vct_values": ["urn:eu.europa.ec.eudi:ehic:1"]},
+          "claims": [{"path": ["ehic_number"]}]
         }
-      }
-    ]
+      ],
+      "credential_sets": [
+        {
+          "id": "pid_or_ehic",
+          "options": [["pid"], ["ehic"]]
+        }
+      ]
+    }
   }
 }
 ~~~
 
-The following is a non-normative example requesting a PID with a
-value constraint and an optional claim:
+The following is a non-normative example expressing "PID required,
+EHIC nice-to-have" using two Credential Sets, one required and one
+optional:
 
 ~~~ json
 {
   "id_token": {
-    "requested_credential_sets": [
-      {
-        "pid": {
-          "essential": true,
-          "claims": [
-            {"path": ["name"], "essential": true},
-            {"path": ["age_over_18"], "essential": true, "value": true},
-            {"path": ["email"], "essential": false}
-          ]
+    "dcql_query": {
+      "credentials": [
+        {
+          "id": "pid",
+          "format": "dc+sd-jwt",
+          "meta": {"vct_values": ["urn:eu.europa.ec.eudi:pid:1"]},
+          "claims": [{"path": ["family_name"]}]
+        },
+        {
+          "id": "ehic",
+          "format": "dc+sd-jwt",
+          "meta": {"vct_values": ["urn:eu.europa.ec.eudi:ehic:1"]},
+          "claims": [{"path": ["ehic_number"]}]
         }
-      }
-    ]
+      ],
+      "credential_sets": [
+        {"id": "pid_required", "options": [["pid"]], "required": true},
+        {"id": "ehic_optional", "options": [["ehic"]], "required": false}
+      ]
+    }
   }
 }
 ~~~
 
-In the above example the OP MUST ensure the wallet discloses "name"
-and "age_over_18", and that "age_over_18" equals true.  The "email"
-claim is requested but not required; the OP SHOULD request it from
-the wallet but MUST NOT fail if the wallet does not disclose it.
+The following is a non-normative example applying a value
+constraint on "age_over_18":
+
+~~~ json
+{
+  "id_token": {
+    "dcql_query": {
+      "credentials": [
+        {
+          "id": "pid",
+          "format": "dc+sd-jwt",
+          "meta": {"vct_values": ["urn:eu.europa.ec.eudi:pid:1"]},
+          "claims": [
+            {"path": ["family_name"]},
+            {"path": ["age_over_18"], "values": [true]}
+          ]
+        }
+      ]
+    }
+  }
+}
+~~~
 
 The following is a non-normative example requesting nested claims
 from a PID credential:
@@ -496,27 +521,31 @@ from a PID credential:
 ~~~ json
 {
   "id_token": {
-    "requested_credential_sets": [
-      {
-        "pid": {
-          "essential": true,
+    "dcql_query": {
+      "credentials": [
+        {
+          "id": "pid",
+          "format": "dc+sd-jwt",
+          "meta": {"vct_values": ["urn:eu.europa.ec.eudi:pid:1"]},
           "claims": [
-            {"path": ["name"]},
+            {"path": ["family_name"]},
             {"path": ["address", "street_address"]},
-            {"path": ["address", "country"], "value": "SE"}
+            {"path": ["address", "country"], "values": ["SE"]}
           ]
         }
-      }
-    ]
+      ]
+    }
   }
 }
 ~~~
 
-If the wallet presents multiple credentials of the same type (e.g.,
-two EHICs for different family members), the OP returns all of them
-in the array.  The RP is responsible for selecting the appropriate
-credential by inspecting the returned claims (for example, matching
-on name or date of birth against the authenticated user's identity).
+If the wallet presents multiple credentials matching a single
+Credential Query (e.g., two EHICs for different family members),
+the OP returns all of them in the corresponding array within the
+Credential Set.  The RP is responsible for selecting the
+appropriate credential by inspecting the returned claims (for
+example, matching on name or date of birth against the
+authenticated user's identity).
 
 ## Consuming Credential Claims
 
@@ -531,14 +560,22 @@ definition.  Specifically, the RP MUST:
 2.  Parse the "presented_credentials" array and extract the
     Credential Set objects relevant to its use case.
 
-3.  Validate that the expected claims are present in each Credential
-    Entry's "claims" object.  If the RP specified a "value"
-    constraint for a claim, verify that the returned value matches.
+3.  Validate that the expected claims are present in each
+    Credential Entry's "claims" object.  If the RP specified a
+    "value" constraint for a claim, verify that the returned value
+    matches.
 
-The RP MUST NOT assume that all requested scopes will be present in
-the response; the user may have declined to present certain
-credentials.  The RP MUST ignore unrecognised credential keys and
-unrecognised members within Credential Entry objects.
+4.  For each Credential Entry that carries a "verification.crit"
+    array, the RP MUST recognise and understand every listed
+    member of the "verification" object.  If any listed member is
+    unknown or its value is not understood, the RP MUST treat the
+    credential as not satisfying the request.
+
+The RP MUST NOT assume that all requested scopes will be present
+in the response; the user may have declined to present certain
+credentials.  Except for members listed in "verification.crit",
+the RP MUST ignore unrecognised credential keys and unrecognised
+members within Credential Entry objects.
 
 ## Trust Model
 
@@ -602,7 +639,7 @@ containing two credentials:
     {
       "ehic": [
         {
-          "type": "https://credential.example.org/ehic/1.0",
+          "type": ["https://credential.example.org/ehic/1.0"],
           "issuer": "https://svs.example.se",
           "valid_from": 1709251200,
           "valid_until": 1740787200,
@@ -619,7 +656,7 @@ containing two credentials:
       ],
       "pda1": [
         {
-          "type": "https://credential.example.org/pda1/1.0",
+          "type": ["https://credential.example.org/pda1/1.0"],
           "issuer": "https://tax.example.se",
           "valid_from": 1709251200,
           "valid_until": 1740787200,
@@ -651,53 +688,88 @@ data obtained via a credential presentation flow (e.g., OpenID4VP,
 DIDComm), re-packaged for consumption by OIDC Relying Parties.
 
 The array contains one or more Credential Set objects.  Each
-Credential Set is a JSON object where each key is a scope value
-corresponding to a credential type and each value is a JSON array of
-Credential Entry objects as defined in {{credential-entry-object}}.
+Credential Set is a JSON object whose members are either credential
+entries (each key a scope value in scope-based mode, or a DCQL
+Credential Query "id" in DCQL-based mode, with the value being a
+JSON array of Credential Entry objects as defined in
+{{credential-entry-object}}), or the reserved member described
+below.
+
+The following reserved member MAY be present at the top level of a
+Credential Set:
+
+id
+: OPTIONAL string.  When the RP used the DCQL-based mode
+  ({{dcql-based-requests}}) and supplied a "credential_sets" entry
+  with an "id", the OP MAY echo that "id" here to allow the RP to
+  identify which Credential Set was satisfied.  The reserved name
+  "id" MUST NOT be used as a Credential Query identifier by RPs.
 
 Within a Credential Set:
 
-*  Each key MUST be unique.
+*  Each non-reserved key MUST be unique.
 
-*  Each value (array) MUST contain at least one Credential Entry.
-   Multiple entries indicate the wallet presented more than one
-   credential of that type.
+*  Each non-reserved value (array) MUST contain at least one
+   Credential Entry.  Multiple entries indicate the wallet presented
+   more than one credential of that type.
 
 The outer array MUST contain at least one Credential Set.  In most
-deployments a single set is returned; multiple sets are possible when
-the RP requested alternatives (see {{requesting-credential-claims}}).
+deployments a single set is returned; multiple sets are possible
+when the RP requested alternatives via "credential_sets" in the
+DCQL-based mode (see {{requesting-credential-claims}}).  In that
+case the OP MUST return one Credential Set object per satisfied
+DCQL Credential Set entry, in the same order as they appeared in
+the request.
 
 Additional members within a Credential Set MAY be present.
-Implementations that do not recognise additional members MUST ignore
-them.
+Implementations that do not recognise additional members MUST
+ignore them.
 
 ### Credential Entry Object {#credential-entry-object}
 
-Each Credential Entry object represents a single credential presented
-during the presentation flow.  It MUST contain the following members:
+Each Credential Entry object represents a single credential
+presented during the presentation flow.  It MUST contain the
+following members:
 
 type
-: A string identifying the credential type.  The value is protocol-
-  specific: for SD-JWT VC credentials it is the Verifiable Credential
-  Type (vct), for mdoc credentials it is the docType, and for other
-  formats it is whatever type identifier the credential format
-  defines.  The OP MUST set this field based on the presented
-  credential.
+: A non-empty JSON array of strings identifying the credential
+  type.  The array contents are credential-format specific:
+
+  *  For SD-JWT VC credentials the array contains a single element:
+     the Verifiable Credential Type (vct).
+  *  For ISO mdoc credentials the array contains a single element:
+     the docType.
+  *  For W3C Verifiable Credentials the array is the credential's
+     "type" array, preserving the order in the credential.
+  *  For other formats the array contains the type identifier(s)
+     that the credential format defines, preserving any ordering
+     defined by that format.  Single-value formats produce a
+     one-element array.
+
+  The OP MUST set this field based on the presented credential.
 
 claims
-: A JSON object {{RFC8259}} containing the disclosed claims from the
-  credential.  Each key is a claim name and each value is the claim
-  value.  Claim names are determined by the credential type and MUST
-  be strings.  Claim values MAY be any valid JSON type.
+: A JSON object {{RFC8259}} containing the disclosed claims from
+  the credential.  Each key is a claim name and each value is the
+  claim value.  Claim names are determined by the credential type
+  and MUST be strings.  Claim values MAY be any valid JSON type.
 
 It MAY contain the following additional members:
 
 issuer
 : A string identifying the entity that issued the credential.  For
   SD-JWT VC credentials this is the "iss" claim value, for mdoc
-  credentials it is the issuing authority identifier.  The OP SHOULD
-  populate this field to allow the RP to make issuer-aware
+  credentials it is the issuing authority identifier.  The OP
+  SHOULD populate this field to allow the RP to make issuer-aware
   authorization decisions.
+
+namespace
+: A string identifying the credential-format-specific namespace to
+  which the disclosed claims belong.  This member is intended for
+  formats that scope claims by namespace, such as ISO mdoc, where
+  its value corresponds to the mdoc NameSpace identifier.  For
+  credential formats that do not use namespaces this member MUST
+  NOT be present.
 
 valid_from
 : A NumericDate (as defined in {{RFC7519}}) indicating when the
@@ -705,8 +777,8 @@ valid_from
 
 valid_until
 : A NumericDate indicating when the credential expires.  The OP
-  MUST NOT include credentials that have already expired at the time
-  of presentation.
+  MUST NOT include credentials that have already expired at the
+  time of presentation.
 
 verified_at
 : A NumericDate indicating when the OP verified the credential
@@ -721,25 +793,63 @@ verification
   holder_binding
   : A string describing the mechanism used to verify that the
     presenter is the legitimate holder of the credential.  Values
-    are taken from the "Credential Holder Binding Methods" registry
-    defined in {{holder-binding-registry}}.
+    are taken from the "Credential Holder Binding Methods"
+    registry defined in {{holder-binding-registry}}.
 
-  Additional members within the "verification" object MAY be present.
-  Implementations that do not recognise additional members MUST
-  ignore them.
+  trust_status
+  : A string describing the OP's assessment of the credential's
+    trust status at the time of verification.  Values are taken
+    from the "Credential Trust Status Values" registry defined in
+    {{trust-status-registry}}.  When absent, the RP MUST assume
+    the OP did not perform a trust-status check.
 
-The following is a non-normative example of a Credential Entry with
-nested claims, as might appear in a PID credential:
+  protected_headers
+  : A JSON object echoing selected verified protected-header
+    parameters from the underlying credential (e.g., JOSE "alg",
+    "kid", "x5c", or COSE protected headers for mdoc).  The OP
+    MUST populate this member exclusively from headers that were
+    covered by the credential's signature verification and MUST
+    NOT include unverified data.  The set of parameters included
+    is a deployment decision.
+
+  crit
+  : A JSON array of non-empty strings, each naming another member
+    of the same "verification" object that the RP MUST understand
+    to accept the credential.  Semantics are modelled after the
+    "crit" Header Parameter of Section 4.1.11 of RFC 7515.  If the
+    RP does not recognise every member listed in "crit", or does
+    not understand the semantics assigned to the listed member's
+    value, the RP MUST treat the credential as not satisfying the
+    request.  Values listed in "crit" MUST also appear as members
+    of the "verification" object; the string "crit" itself MUST
+    NOT appear in the array.  This mechanism allows the OP to
+    ensure that safety-critical signals (e.g., a "trust_status" of
+    "suspended") cannot be silently ignored.
+
+  Additional members within the "verification" object MAY be
+  present.  Unless listed in "crit", implementations that do not
+  recognise additional members MUST ignore them.
+
+The following is a non-normative example of a Credential Entry
+with nested claims and an extended "verification" object, as might
+appear in a PID credential whose trust status the OP wants the RP
+to acknowledge:
 
 ~~~ json
 {
-  "type": "urn:eu.europa.ec.eudi:pid:1",
+  "type": ["urn:eu.europa.ec.eudi:pid:1"],
   "issuer": "https://pid.example.gov.se",
   "valid_from": 1709251200,
   "valid_until": 1740787200,
   "verified_at": 1722772700,
   "verification": {
-    "holder_binding": "key_binding"
+    "holder_binding": "key_binding",
+    "trust_status": "suspended",
+    "protected_headers": {
+      "alg": "ES256",
+      "kid": "pid-signer-2026"
+    },
+    "crit": ["trust_status"]
   },
   "claims": {
     "family_name": "Doe",
@@ -760,20 +870,40 @@ nested claims, as might appear in a PID credential:
 }
 ~~~
 
+The following is a non-normative example of a Credential Entry for
+a W3C Verifiable Credential where "type" is an array:
+
+~~~ json
+{
+  "type": ["VerifiableCredential", "UniversityDegreeCredential"],
+  "issuer": "https://university.example.edu",
+  "verified_at": 1722772700,
+  "verification": {
+    "holder_binding": "key_binding"
+  },
+  "claims": {
+    "degree": {
+      "type": "BachelorDegree",
+      "name": "Bachelor of Science and Arts"
+    }
+  }
+}
+~~~
+
 Additional members MAY be present.  Implementations that do not
 recognise additional members MUST ignore them.
 
-## Discovery
+## Discovery {#discovery}
 
 An OP that supports this bridge mechanism MUST include
-"presented_credentials" in the "claims_supported" list in its OpenID
-Connect Discovery {{OpenID.Discovery}} metadata document.
+"presented_credentials" in the "claims_supported" list in its
+OpenID Connect Discovery {{OpenID.Discovery}} metadata document.
 
 The OP MUST include a "credential_presentations_supported" member
 in its discovery metadata.  This is a JSON object where each key is
-a scope value that the RP can use in the authorization request, and
-each value is an object describing the credential type configuration.
-Each configuration object MUST contain at minimum:
+a scope value that the RP can use in the authorization request,
+and each value is an object describing the credential type
+configuration.  Each configuration object MUST contain at minimum:
 
 format
 : A string identifying the credential format (e.g., "dc+sd-jwt",
@@ -787,9 +917,15 @@ type
 The OP uses this metadata to translate the RP's scope request into
 the correct credential query (e.g., a DCQL query with the
 appropriate "vct_values" or "doctype_value") toward the wallet.
-The Credential Entry "type" field in the response MUST be populated
-from the presented credential itself and MUST match the "type" value
-declared in this mapping.
+The Credential Entry "type" array in the response MUST be
+populated from the presented credential itself and MUST contain
+the "type" value declared in this mapping.
+
+An OP that additionally supports the DCQL-based request mode
+({{dcql-based-requests}}) MUST include a JSON boolean member
+"dcql_query_supported" in its discovery metadata with the value
+`true`.  An OP that does not support the DCQL-based mode MAY omit
+this member or set it to `false`.
 
 The following is a non-normative example of an RP discovering the
 OP's supported credential types:
@@ -825,215 +961,142 @@ Content-Type: application/json
 ## Authentication Flow
 
 When the OP receives an OIDC Authentication Request that includes
-credential type scopes (and optionally a "requested_credential_sets"
-claims parameter for fine-grained control), it MUST:
+credential type scopes (and optionally a "dcql_query" member inside
+the OIDC "claims" request parameter for fine-grained control), it
+MUST:
 
-1.  Validate that each credential type scope corresponds to a key in
-    the OP's "credential_presentations_supported" metadata.  The OP
-    MUST ignore any credential type scope that is not present in its
-    metadata.  If none of the requested credential scopes are
+1.  Validate that each credential type scope corresponds to a key
+    in the OP's "credential_presentations_supported" metadata.  The
+    OP MUST ignore any credential type scope that is not present in
+    its metadata.  If none of the requested credential scopes are
     supported, the OP MUST return an OIDC error response.
 
-2.  Initiate a credential presentation request to the user's wallet
+2.  If the request includes a "dcql_query" member, validate it
+    against the profile defined in {{dcql-based-requests}}.  If the
+    OP does not support the DCQL-based mode, or the query does not
+    conform to the profile, the OP MUST return an OIDC error
+    response with error code "invalid_request".
+
+3.  Initiate a credential presentation request to the user's wallet
     for the supported credential types, using the presentation
-    protocol supported by the deployment.
+    protocol supported by the deployment.  When the RP supplied a
+    "dcql_query", the OP SHOULD translate it into the corresponding
+    presentation-protocol query (see {{app-dcql-binding}} for the
+    DCQL binding).
 
-3.  Verify the presented credentials according to the applicable
-    trust framework.
+4.  Verify the presented credentials according to the applicable
+    trust framework, including any "trusted_authorities"
+    constraints from the RP's "dcql_query".
 
-4.  Extract the disclosed claims from each verified credential.
+5.  Extract the disclosed claims from each verified credential.
 
-5.  Construct the "presented_credentials" object as defined in
+6.  Construct the "presented_credentials" object as defined in
     {{presented-credentials-array}}.
 
-6.  Include the "presented_credentials" claim in the ID Token, the
-    UserInfo response, or both, depending on the OP's policy and the
-    size considerations described in {{claim-set-size-limits}}.
+7.  Include the "presented_credentials" claim in the ID Token, the
+    UserInfo response, or both, depending on the OP's policy and
+    the size considerations described in {{claim-set-size-limits}}.
 
 Common presentation protocols include OpenID4VP {{OpenID4VP}} and
 DIDComm Present Proof.  The choice of protocol is a deployment
 decision and does not affect the "presented_credentials" format
 returned to the RP.
 
-## Credential Mapping
+## Credential Mapping {#credential-mapping}
+
+This section describes the protocol-agnostic mapping between the
+OIDC-level request the RP sends to the OP and the credential data
+the OP returns.  Concrete bindings to specific presentation
+protocols are given in the appendices; the DCQL binding used with
+OpenID4VP is defined in {{app-dcql-binding}}, and a placeholder for
+a future DIDComm binding appears in {{app-didcomm-binding}}.
 
 The OP uses the "credential_presentations_supported" discovery
 metadata to translate scopes into credential queries.  For each
-credential type scope in the authorization request, the OP looks up
-the corresponding key in "credential_presentations_supported" and
-uses the "format" and "type" values to construct the presentation
-request.  The same key is used as the DCQL "id" and as the key in
-the "presented_credentials" response.
+credential type scope in the authorization request, the OP looks
+up the corresponding key in "credential_presentations_supported"
+and uses the "format" and "type" values to construct the
+presentation-protocol query.  The same key is used both to
+identify the credential in the query toward the wallet and as the
+key in the "presented_credentials" response.
 
 The binding is:
 
 *  The key in "credential_presentations_supported" (e.g., "ehic")
-   is the scope value the RP includes in the authorization request.
-
-*  The OP MUST use this same value as the "id" in the DCQL
-   Credential Query.
+   is the scope value the RP includes in the authorization request,
+   and MUST also be used as the Credential Query identifier in the
+   presentation-protocol query.
 
 *  The OP MUST use the "format" and "type" from the configuration
-   entry to populate the DCQL "format" and "meta" fields.
+   entry to populate the presentation-protocol query's format and
+   type-identifier parameters.
 
 *  The OP MUST use this same value as the key in the
-   "presented_credentials" response.
+   "presented_credentials" response object.  For example, if the RP
+   requested scope "ehic", the resulting Credential Set entry MUST
+   be keyed as "ehic".
 
-For example, given the following discovery metadata:
+When the RP additionally supplied a "dcql_query" in the OIDC
+"claims" request parameter ({{dcql-based-requests}}), the OP MUST
+use the DCQL Credential Query "id" values from the RP's query as
+the keys in the "presented_credentials" response.  Each "id" MUST
+correspond to a key in "credential_presentations_supported".
 
-~~~ json
-{
-  "credential_presentations_supported": {
-    "ehic": {
-      "format": "dc+sd-jwt",
-      "type": "urn:eu.europa.ec.eudi:ehic:1"
-    },
-    "pda1": {
-      "format": "dc+sd-jwt",
-      "type": "urn:eu.europa.ec.eudi:pda1:1"
-    }
-  }
-}
-~~~
+Response construction rules:
 
-and an RP request with `scope=openid ehic pda1`, the OP constructs:
+*  The OP MUST NOT include claims that were not disclosed by the
+   wallet.
+*  The OP MUST NOT modify claim values during the mapping.
+*  When the RP used the DCQL-based mode and specified a non-empty
+   "claims" array for a Credential Query, the OP MUST include only
+   the requested claims in the corresponding Credential Entry's
+   "claims" object.  Even if the wallet discloses additional claims
+   (for example, because the credential format does not support
+   selective disclosure), the OP MUST NOT relay unrequested claims
+   to the RP.  This ensures data minimization regardless of the
+   underlying credential format's selective disclosure
+   capabilities.
+*  When the RP used scope-based mode, or the RP's Credential Query
+   omitted "claims", the OP includes the claim set configured for
+   that credential type by deployment policy.
 
-~~~ json
-{
-  "credentials": [
-    {
-      "id": "ehic",
-      "format": "dc+sd-jwt",
-      "meta": { "vct_values": ["urn:eu.europa.ec.eudi:ehic:1"] },
-      "claims": []
-    },
-    {
-      "id": "pda1",
-      "format": "dc+sd-jwt",
-      "meta": { "vct_values": ["urn:eu.europa.ec.eudi:pda1:1"] },
-      "claims": []
-    }
-  ]
-}
-~~~
+Constraint enforcement rules:
 
-The wallet returns a VP Token keyed by these same "id" values,
-allowing the OP to map results back to the corresponding scope.
+*  If a claim query in the RP's "dcql_query" specifies a "values"
+   array and the disclosed claim value does not match any entry
+   (using JSON value equality as defined in {{RFC8259}}), the
+   credential MUST be treated as not satisfying the query.
+*  If the RP's "dcql_query" specifies "trusted_authorities" for a
+   Credential Query and the presented credential does not chain to
+   at least one listed authority, the credential MUST be treated as
+   not satisfying the query.  Security requirements for
+   dereferencing external trust material are given in
+   {{trust-list-fetching}}.
+*  If the RP's "dcql_query" includes "credential_sets", the OP MUST
+   evaluate the alternation per Section 6.3 of {{OpenID4VP}}.  If
+   no required Credential Set can be satisfied, the OP MUST return
+   an OIDC error response (e.g., "access_denied").
 
-The OP MUST use the scope value as the key within the
-"presented_credentials" response object.  For example, if the RP
-requested scope "ehic", the resulting entry MUST be keyed as "ehic".
-This ensures a predictable, stable mapping between the RP's request
-and the response.
+Applicability of RP-supplied constraints:
 
-The OP MUST NOT include claims that were not disclosed by the wallet.
-The OP MUST NOT modify claim values during the mapping.
-
-When the RP uses the claims-based request mechanism (with explicit
-"path" entries), the OP MUST include only the requested claims in the
-Credential Entry's "claims" object.  Even if the wallet discloses
-additional claims (for example, because the credential format does
-not support selective disclosure), the OP MUST NOT relay unrequested
-claims to the RP.  This ensures data minimization regardless of the
-underlying credential format's selective disclosure capabilities.
-
-When the RP uses scope-only (no "requested_credential_sets" claims
-parameter), the OP includes all claims disclosed by the wallet, since
-the RP did not express a preference for specific claims.
-
-The OP MUST enforce claim-level constraints specified in the
-"claims" array:
-
-*  If a claim query has "essential": true (or the default applies)
-   and the wallet does not disclose the claim identified by "path",
-   the credential MUST be treated as not satisfying the request.
-
-*  If a claim query specifies a "value" member and the disclosed
-   value does not exactly match (using JSON value equality as
-   defined in {{RFC8259}}), the credential MUST be treated as not
-   satisfying the request.
-
-*  Claim queries with "essential": false that are not disclosed by
-   the wallet MAY be omitted from the Credential Entry without
-   failing the request.
-
-The OP translates each "path" array directly into the corresponding
-DCQL Claims Path Pointer when constructing the presentation query
-toward the wallet.
-
-The OP is responsible for translating the RP's OIDC-level request
-(scopes, claims parameter) into a protocol-specific credential query
-directed at the wallet.  For example, when using OpenID4VP the OP
-would construct a DCQL (Digital Credentials Query Language) query
-matching the requested credential types; when using DIDComm the OP
-would build a Present Proof request.  This translation is deployment-
-specific and outside the scope of this specification.  The OP MUST
-document the mapping between OIDC scopes and the credential types
-they resolve to, either in its discovery metadata or in out-of-band
-documentation.
-
-When the RP's request includes a "value" constraint on a claim, the
-OP SHOULD propagate this constraint to the wallet where the
-presentation protocol supports it.  The RP's "path" arrays map
-directly to DCQL Claims Path Pointers, and the "value" member maps
-to the DCQL "values" array.  For example, an RP request containing:
-
-~~~ json
-"claims": [
-  { "path": ["name"] },
-  { "path": ["address", "country"], "value": "SE" }
-]
-~~~
-
-would translate to the following DCQL Claims Query entries:
-
-~~~ json
-{
-  "credentials": [
-    {
-      "id": "ehic",
-      "format": "dc+sd-jwt",
-      "meta": {
-        "vct_values": [
-          "urn:credential:ehic"
-        ]
-      },
-      "claims": [
-        {"path": ["name"]},
-        {"path": ["address", "country"], "values": ["SE"]}
-      ]
-    }
-  ]
-}
-~~~
-
-However, DCQL value matching is defined as best-effort: the wallet
-SHOULD filter on the constraint but is not required to do so (see
-Section 6.4.1 of {{OpenID4VP}}).  Consequently, the OP MUST NOT rely
-on the wallet to enforce value constraints and MUST always validate
-disclosed claim values against the RP's "value" requirements after
-receiving the presentation.  Propagating the constraint to the wallet
-remains useful as a privacy optimisation, because it allows the
-wallet to avoid disclosing credentials that would not satisfy the
-request.
-
-The OIDC request model (scopes and the "claims" parameter) is
-intentionally simpler than the query languages available in
-presentation protocols (e.g., DCQL in OpenID4VP).  This means that
-certain constraints expressible in a presentation query -- such as
-issuer restrictions, issuance date filters, or compound field
-requirements -- cannot be communicated by the RP.  The OP MUST apply
-its own policy to resolve these edge cases (for example, by selecting
-the most recent matching credential or by restricting accepted
-issuers via configuration).  The OP SHOULD document any such policies
-so that RPs can anticipate the resulting behaviour.
+*  In scope-based mode the RP cannot express selective-disclosure,
+   value, or issuer constraints on a per-request basis; the OP
+   applies its own policy.
+*  In DCQL-based mode the RP can express selective disclosure via
+   "path", value constraints via "values", and issuer or authority
+   constraints via "trusted_authorities", within the profile
+   defined in {{dcql-based-requests}}.
+*  Constraints not expressible in this profile (for example,
+   issuance date filters or compound field requirements) remain
+   deployment policy.  The OP SHOULD document such policies so that
+   RPs can anticipate the resulting behaviour.
 
 The structure of the "presented_credentials" claim MUST be
-independent of the credential presentation protocol used between the
-OP and the wallet.  Whether the OP collected credentials via
+independent of the credential presentation protocol used between
+the OP and the wallet.  Whether the OP collected credentials via
 OpenID4VP, DIDComm, or any other mechanism, the resulting claim
-format MUST conform to this specification.  The RP MUST NOT need to
-be aware of which presentation protocol was used.
+format MUST conform to this specification.  The RP MUST NOT need
+to be aware of which presentation protocol was used.
 
 # Limitations and Considerations
 
@@ -1174,29 +1237,31 @@ within the "presented_credentials" object.  The OP MUST populate this
 claim exclusively from verified credential presentations.  The ID
 Token MUST be signed by the OP to protect integrity.
 
-## Trust List Fetching
+## Trust Authority Dereferencing {#trust-list-fetching}
 
-When the OP dereferences "trusted_issuer_lists" URIs provided by an
-RP, it MUST enforce the following safeguards:
+When the OP dereferences external references contained in a
+"trusted_authorities" entry supplied via the RP's "dcql_query"
+(such as an "etsi_tl" trust list URI or an "openid_federation"
+entity identifier), it MUST enforce the following safeguards:
 
-*  The OP MUST only fetch trust lists over HTTPS.
+*  The OP MUST only fetch external trust material over HTTPS.
 
 *  The OP MUST NOT dereference arbitrary URIs provided by an RP.
-   The OP MUST restrict which trust list URIs it is willing to fetch
-   to prevent Server-Side Request Forgery (SSRF).  The mechanism for
+   The OP MUST restrict which URIs it is willing to fetch to
+   prevent Server-Side Request Forgery (SSRF).  The mechanism for
    this restriction (e.g., an allowlist, domain policy) is a
    deployment decision and outside the scope of this specification.
 
-*  The OP MUST impose size limits on fetched trust list documents to
-   prevent resource exhaustion.
+*  The OP MUST impose size limits on fetched documents to prevent
+   resource exhaustion.
 
-*  The OP SHOULD cache trust lists and enforce a minimum refresh
-   interval to limit the impact of a compromised or unavailable trust
-   list endpoint.
+*  The OP SHOULD cache dereferenced trust material and enforce a
+   minimum refresh interval to limit the impact of a compromised or
+   unavailable trust list endpoint.
 
-*  If a trust list cannot be fetched or parsed, the OP MUST treat it
-   as if no issuers were listed in that list.  The OP MUST NOT fall
-   back to accepting all issuers.
+*  If an external trust reference cannot be fetched or parsed, the
+   OP MUST treat it as if no issuers were listed for that entry.
+   The OP MUST NOT fall back to accepting all issuers.
 
 ## Privacy Considerations
 
@@ -1245,7 +1310,7 @@ Specification Document(s)
 ## OpenID Connect Discovery Metadata Registration
 
 This specification requests registration of the following metadata
-parameter:
+parameters:
 
 Metadata Name
 : "credential_presentations_supported"
@@ -1259,6 +1324,52 @@ Change Controller
 
 Specification Document(s)
 : {{discovery}} of this document
+
+Metadata Name
+: "dcql_query_supported"
+
+Metadata Description
+: A JSON boolean indicating whether the OP accepts a "dcql_query"
+  member inside the OIDC "claims" request parameter as defined in
+  the DCQL-based request mode.
+
+Change Controller
+: IETF
+
+Specification Document(s)
+: {{discovery}} of this document
+
+## Credential Trust Status Values Registry {#trust-status-registry}
+
+This specification establishes the "Credential Trust Status Values"
+registry.  The registration policy is "Specification Required" as
+defined in Section 4.6 of {{!RFC8126}}.
+
+Each entry in the registry contains the following fields:
+
+Value
+: A short string used as the value of the "trust_status" member of
+  the Credential Entry "verification" object.
+
+Description
+: A brief description of the trust-status semantics.
+
+Change Controller
+: The entity responsible for the registration.
+
+Specification Document(s)
+: Reference to the specification defining the value.
+
+The initial contents of the registry are:
+
+| Value | Description | Change Controller | Specification |
+|:---|:---|:---|:---|
+| unknown | The OP performed no trust-status check or the check produced no conclusive result | IETF | {{credential-entry-object}} of this document |
+| valid | The credential's trust status was checked and is currently valid | IETF | {{credential-entry-object}} of this document |
+| suspended | The credential is temporarily suspended by its issuer or trust framework | IETF | {{credential-entry-object}} of this document |
+| revoked | The credential has been revoked by its issuer or trust framework | IETF | {{credential-entry-object}} of this document |
+| expired | The credential has expired according to its own validity period | IETF | {{credential-entry-object}} of this document |
+| invalid | The credential failed one or more verification checks | IETF | {{credential-entry-object}} of this document |
 
 ## Credential Holder Binding Methods Registry {#holder-binding-registry}
 
@@ -1288,10 +1399,131 @@ The initial contents of the registry are:
 | biometric | Biometric verification of the presenter against data bound to the credential | IETF | {{credential-entry-object}} of this document |
 | pin | Verification of a PIN or passcode known to the credential holder | IETF | {{credential-entry-object}} of this document |
 
-
 --- back
+
+# DCQL Binding {#app-dcql-binding}
+
+This appendix defines the concrete binding between the OIDC-level
+request defined in {{requesting-credential-claims}} and DCQL as
+specified in Section 6 of {{OpenID4VP}}.  Deployments that use
+OpenID4VP as the presentation protocol between the OP and the
+wallet MUST follow this binding; other bindings are out of scope
+of this appendix.
+
+## Scope-Based Mode
+
+For each credential type scope in the authorization request, the
+OP constructs one DCQL Credential Query as follows:
+
+*  The scope value is used verbatim as the DCQL Credential Query
+   "id".
+*  The "format" is taken from the corresponding entry in
+   "credential_presentations_supported".
+*  The "meta" member is populated from the entry's "type": for
+   the `dc+sd-jwt` format the OP sets `meta.vct_values` to a JSON
+   array containing the "type" string; for the `mso_mdoc` format
+   the OP sets `meta.doctype_value` to the "type" string.
+*  The "claims" array is either omitted or set to the deployment's
+   pre-registered claim set for the credential type.
+
+For example, given the discovery metadata:
+
+~~~ json
+{
+  "credential_presentations_supported": {
+    "ehic": {
+      "format": "dc+sd-jwt",
+      "type": "urn:eu.europa.ec.eudi:ehic:1"
+    },
+    "pda1": {
+      "format": "dc+sd-jwt",
+      "type": "urn:eu.europa.ec.eudi:pda1:1"
+    }
+  }
+}
+~~~
+
+and an RP request with `scope=openid ehic pda1`, the OP constructs
+the following DCQL query:
+
+~~~ json
+{
+  "credentials": [
+    {
+      "id": "ehic",
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["urn:eu.europa.ec.eudi:ehic:1"]
+      }
+    },
+    {
+      "id": "pda1",
+      "format": "dc+sd-jwt",
+      "meta": {
+        "vct_values": ["urn:eu.europa.ec.eudi:pda1:1"]
+      }
+    }
+  ]
+}
+~~~
+
+The wallet returns a VP Token keyed by these same "id" values,
+allowing the OP to map presented credentials back to the
+corresponding scope.
+
+## DCQL-Based Mode
+
+When the RP supplied a "dcql_query" member in the OIDC "claims"
+request parameter, the OP MUST use that query as the DCQL query
+sent to the wallet, subject to the following:
+
+*  The OP MAY augment the query with additional Credential Queries
+   derived from credential type scopes not covered by the RP's
+   "dcql_query", using the scope-based rules above.
+*  Each Credential Query "id" in the RP's "dcql_query" MUST
+   correspond to a key in "credential_presentations_supported".
+*  The OP MUST NOT relax any constraint expressed by the RP.  In
+   particular, the OP MUST NOT drop "trusted_authorities" or widen
+   "values" arrays before sending the query to the wallet.
+
+## Response Mapping
+
+For each satisfied Credential Query, the OP populates a Credential
+Entry as defined in {{credential-entry-object}}.  The DCQL
+Credential Query "id" becomes the key in the enclosing Credential
+Set in the "presented_credentials" response.
+
+When the RP's "dcql_query" contains "credential_sets", the OP
+returns one Credential Set object in the "presented_credentials"
+array for each satisfied entry in "credential_sets", populated
+with the Credential Entries from the matched AND-group.  The
+OPTIONAL "id" of each Credential Set entry MAY be echoed in the
+response via the reserved "id" member described in
+{{presented-credentials-array}}.
+
+## Value Constraint Propagation
+
+DCQL value matching is defined as best-effort: the wallet SHOULD
+filter on the constraint but is not required to do so (see Section
+6.4.1 of {{OpenID4VP}}).  Consequently, the OP MUST NOT rely on
+the wallet to enforce "values" constraints and MUST always
+validate disclosed claim values against the RP's "values"
+requirements after receiving the presentation.  Propagating the
+constraint to the wallet remains useful as a privacy optimisation,
+because it allows the wallet to avoid disclosing credentials that
+would not satisfy the request.
+
+# DIDComm Binding {#app-didcomm-binding}
+
+This appendix is reserved for a future DIDComm Present Proof
+binding.  Its inclusion is intended to make the extension pattern
+explicit: bindings for additional presentation protocols may be
+added here without changing the protocol-agnostic contract in
+{{credential-mapping}}.
 
 # Acknowledgments
 {:numbered="false"}
 
-TODO acknowledge.
+The author would like to thank
+Patrick Amrein (Ubique)
+for reviews, comments, and contributions to this document.
