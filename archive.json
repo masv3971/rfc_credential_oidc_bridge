@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-13T01:18:37.883901+00:00",
+  "timestamp": "2026-08-16T00:53:00.276644+00:00",
   "repo": "masv3971/rfc_credential_oidc_bridge",
   "labels": [
     {
@@ -239,6 +239,65 @@
           "createdAt": "2026-08-07T13:08:21Z",
           "updatedAt": "2026-08-07T13:08:21Z",
           "comments": []
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "id": "PR_kwDOTuxYJM7_HsVI",
+      "title": "Masv/editorial",
+      "url": "https://github.com/masv3971/rfc_credential_oidc_bridge/pull/2",
+      "state": "OPEN",
+      "author": "masv3971",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2026-08-14T13:35:29Z",
+      "updatedAt": "2026-08-14T13:38:45Z",
+      "baseRepository": "masv3971/rfc_credential_oidc_bridge",
+      "baseRefName": "main",
+      "baseRefOid": "e0c6c281feba6e5f005cf9c5583d9584c55c5802",
+      "headRepository": "masv3971/rfc_credential_oidc_bridge",
+      "headRefName": "masv/editorial",
+      "headRefOid": "19671375d56b50a9052618338e05481473d4310a",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABJk8Ryg",
+          "commit": {
+            "abbreviatedOid": "1967137"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nThis PR updates the OIDC Credential Bridge draft to replace the prior claims-based request mechanism with an optional DCQL-based mode while tightening the response/verification contract (including critical verification signals), and adds a markdownlint configuration to support editorial formatting.\n\n**Changes:**\n- Define two request modes: scope-based (required) and DCQL-based (optional), including discovery signaling via `dcql_query_supported`.\n- Update the `presented_credentials`/Credential Set and Credential Entry model (e.g., `type` becomes an array; add reserved Credential Set `id`; extend `verification` with `crit`, `trust_status`, and `protected_headers`).\n- Add an OpenID4VP/DCQL binding appendix and a placeholder DIDComm binding appendix; add a markdownlint configuration file.\n\n### Reviewed changes\n\nCopilot reviewed 2 out of 2 changed files in this pull request and generated 3 comments.\n\n| File | Description |\n| ---- | ----------- |\n| draft-svensson-credential-oidc-bridge.md | Reworks request/response semantics to introduce DCQL mode, expands verification/trust signaling, and adds protocol binding appendices. |\n| .markdownlint.json | Adds markdownlint rule configuration for consistent document linting. |\n\n\n\n\n\n\n\n---\n\n\ud83d\udca1 <a href=\"/masv3971/rfc_credential_oidc_bridge/new/main?filename=.github/skills/code-review/SKILL.md\" class=\"Link--inTextBlock\" target=\"_blank\" rel=\"noopener noreferrer\">Add a `code-review` agent skill</a> or configure MCP servers for context-aware, tailored reviews. <a href=\"https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review#mcp-servers-and-agent-skills\" class=\"Link--inTextBlock\" target=\"_blank\" rel=\"noopener noreferrer\">Learn more in the docs.</a>",
+          "createdAt": "2026-08-14T13:38:44Z",
+          "updatedAt": "2026-08-14T13:38:45Z",
+          "comments": [
+            {
+              "originalPosition": 604,
+              "body": "The document now models value constraints in DCQL using the \"values\" array, but this consumer guidance still refers to a \"value\" constraint and implies exact equality to a single value. This is inconsistent with the DCQL profile described earlier.",
+              "createdAt": "2026-08-14T13:38:44Z",
+              "updatedAt": "2026-08-14T13:38:45Z"
+            },
+            {
+              "originalPosition": 1330,
+              "body": "The semantics for \"trust_status\" say that when it is absent the RP must assume the OP did not perform a trust-status check, but the registry's \"unknown\" value also includes \"no trust-status check\". This overlaps/conflicts and makes it unclear when an OP should omit the member vs include \"unknown\".",
+              "createdAt": "2026-08-14T13:38:44Z",
+              "updatedAt": "2026-08-14T13:38:45Z"
+            },
+            {
+              "originalPosition": 664,
+              "body": "The reserved top-level member name \"id\" in a Credential Set can collide with a credential key (scope value / DCQL Credential Query id). The current text only constrains RPs, but in practice the OP also needs to ensure \"id\" is never used as a key in \"credential_presentations_supported\" (and therefore never as a scope value), otherwise the response structure becomes ambiguous.",
+              "createdAt": "2026-08-14T13:38:44Z",
+              "updatedAt": "2026-08-14T13:38:45Z"
+            }
+          ]
         }
       ]
     }
