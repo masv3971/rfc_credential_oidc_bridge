@@ -562,8 +562,9 @@ definition.  Specifically, the RP MUST:
 
 3.  Validate that the expected claims are present in each
     Credential Entry's "claims" object.  If the RP specified a
-    "value" constraint for a claim, verify that the returned value
-    matches.
+    "values" constraint for a claim, verify that the returned
+    value matches at least one entry in that "values" array (using
+    JSON value equality as defined in {{RFC8259}}).
 
 4.  For each Credential Entry that carries a "verification.crit"
     array, the RP MUST recognise and understand every listed
@@ -702,8 +703,14 @@ id
 : OPTIONAL string.  When the RP used the DCQL-based mode
   ({{dcql-based-requests}}) and supplied a "credential_sets" entry
   with an "id", the OP MAY echo that "id" here to allow the RP to
-  identify which Credential Set was satisfied.  The reserved name
-  "id" MUST NOT be used as a Credential Query identifier by RPs.
+  identify which Credential Set was satisfied.  The value is
+  chosen by the RP and treated as opaque by the OP; for example,
+  an RP that asked for "PID or EHIC" via a "credential_sets" entry
+  with `"id": "pid_or_ehic"` receives the same string back on the
+  corresponding Credential Set in the response.  The reserved
+  name "id" MUST NOT be used as a credential type scope value
+  (i.e., as a key in "credential_presentations_supported") nor as
+  a DCQL Credential Query identifier.
 
 Within a Credential Set:
 
@@ -800,8 +807,11 @@ verification
   : A string describing the OP's assessment of the credential's
     trust status at the time of verification.  Values are taken
     from the "Credential Trust Status Values" registry defined in
-    {{trust-status-registry}}.  When absent, the RP MUST assume
-    the OP did not perform a trust-status check.
+    {{trust-status-registry}}.  If the OP did not perform a
+    trust-status check, the OP MUST set this member to
+    "not_checked" rather than omitting it.  If the OP performed a
+    check but the authoritative source returned no conclusive
+    answer, the OP MUST set this member to "unknown".
 
   protected_headers
   : A JSON object echoing selected verified protected-header
@@ -1364,7 +1374,8 @@ The initial contents of the registry are:
 
 | Value | Description | Change Controller | Specification |
 |:---|:---|:---|:---|
-| unknown | The OP performed no trust-status check or the check produced no conclusive result | IETF | {{credential-entry-object}} of this document |
+| not_checked | The OP performed no trust-status check for this credential | IETF | {{credential-entry-object}} of this document |
+| unknown | The OP performed a trust-status check but the authoritative source returned no conclusive answer (e.g., ETSI Token Status List "unknown" state) | IETF | {{credential-entry-object}} of this document |
 | valid | The credential's trust status was checked and is currently valid | IETF | {{credential-entry-object}} of this document |
 | suspended | The credential is temporarily suspended by its issuer or trust framework | IETF | {{credential-entry-object}} of this document |
 | revoked | The credential has been revoked by its issuer or trust framework | IETF | {{credential-entry-object}} of this document |
