@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-16T00:53:00.276644+00:00",
+  "timestamp": "2026-08-18T00:49:35.095363+00:00",
   "repo": "masv3971/rfc_credential_oidc_bridge",
   "labels": [
     {
@@ -254,13 +254,13 @@
       "labels": [],
       "body": "",
       "createdAt": "2026-08-14T13:35:29Z",
-      "updatedAt": "2026-08-14T13:38:45Z",
+      "updatedAt": "2026-08-17T13:45:05Z",
       "baseRepository": "masv3971/rfc_credential_oidc_bridge",
       "baseRefName": "main",
       "baseRefOid": "e0c6c281feba6e5f005cf9c5583d9584c55c5802",
       "headRepository": "masv3971/rfc_credential_oidc_bridge",
       "headRefName": "masv/editorial",
-      "headRefOid": "19671375d56b50a9052618338e05481473d4310a",
+      "headRefOid": "fdc62d1b2e4dd5e4afe1582c50889cc3a9e543be",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -298,6 +298,32 @@
               "updatedAt": "2026-08-14T13:38:45Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABJv2ZAQ",
+          "commit": {
+            "abbreviatedOid": "1967137"
+          },
+          "author": "ubamrein",
+          "authorAssociation": "NONE",
+          "state": "APPROVED",
+          "body": "Thanks! I think from my side, all my concerns were addressed :) ",
+          "createdAt": "2026-08-17T06:56:26Z",
+          "updatedAt": "2026-08-17T06:56:26Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABJyxPKg",
+          "commit": {
+            "abbreviatedOid": "fdc62d1"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "Copilot encountered an error and was unable to review this pull request. You can try again by re-requesting a review.",
+          "createdAt": "2026-08-17T13:45:05Z",
+          "updatedAt": "2026-08-17T13:45:05Z",
+          "comments": []
         }
       ]
     }
