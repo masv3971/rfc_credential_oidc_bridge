@@ -257,35 +257,28 @@ If the OP does not support the DCQL-based mode and the RP supplies
 a "dcql_query", the OP MUST return an OIDC error response with
 error code "invalid_request".
 
-The following DCQL features are permitted in this profile:
+The "dcql_query" value is a DCQL query object as defined in
+Section 6 of {{OpenID4VP}}.  All member definitions, required and
+optional fields, and format-specific rules (e.g., for the "meta"
+object of `dc+sd-jwt` and `mso_mdoc`) are inherited from that
+section and are not restated here.
 
-*  At the top level: "credentials" (REQUIRED) and "credential_sets"
-   (OPTIONAL).
-*  Within each Credential Query: "id", "format", "meta", "claims",
-   "trusted_authorities", and
-   "require_cryptographic_holder_binding".
-*  Within "meta": "vct_values" (for `dc+sd-jwt`) or "doctype_value"
-   (for `mso_mdoc`).
-*  Within each entry of "claims": "path" and "values".
-*  "trusted_authorities" uses the entry shape `{"type", "values"}`
-   defined in Section 6.1.4 of {{OpenID4VP}}.
+This profile applies the following additional restrictions:
 
-The DCQL "claim_sets" member MUST NOT be used in this profile.
-RPs that need alternation between different combinations of claims
-SHOULD express it as multiple Credential Queries linked via
-"credential_sets".
-
-When present, the "claims" array of a Credential Query MUST be
-non-empty (see Section 6.1 of {{OpenID4VP}}).  Absence of "claims"
-means no specific claims are requested for that Credential Query;
-the OP then applies the pre-registered claim set for the credential
-type, matching the semantics of scope-based mode.
-
-The "id" of each Credential Query MUST match a key in the OP's
-"credential_presentations_supported" discovery metadata (see
-{{credential-mapping}}).  If the OP receives an unknown "id", it
-MUST return an OIDC error response with error code
-"invalid_request".
+*  The DCQL "claim_sets" member MUST NOT be used.  RPs that need
+   alternation between different combinations of claims SHOULD
+   express it as multiple Credential Queries linked via
+   "credential_sets".
+*  The "format" of each Credential Query MUST be one of the
+   formats listed in the OP's "credential_presentations_supported"
+   discovery metadata (see {{credential-mapping}}).
+*  The "id" of each Credential Query MUST match a key in the OP's
+   "credential_presentations_supported" discovery metadata.  If
+   the OP receives an unknown "id", it MUST return an OIDC error
+   response with error code "invalid_request".
+*  When "claims" is omitted from a Credential Query, the OP
+   applies the pre-registered claim set for the credential type
+   identified by "id", matching the semantics of scope-based mode.
 
 The "credential_sets" member expresses combinatorial logic over
 Credential Queries as defined in Section 6.3 of {{OpenID4VP}}.
@@ -646,6 +639,7 @@ containing two credentials:
           "valid_until": 1740787200,
           "verified_at": 1722772700,
           "verification": {
+            "trust_status": "not_checked",
             "holder_binding": "key_binding"
           },
           "claims": {
@@ -663,6 +657,7 @@ containing two credentials:
           "valid_until": 1740787200,
           "verified_at": 1722772700,
           "verification": {
+            "trust_status": "not_checked",
             "holder_binding": "key_binding"
           },
           "claims": {
@@ -784,8 +779,14 @@ valid_from
 
 valid_until
 : A NumericDate indicating when the credential expires.  The OP
-  MUST NOT include credentials that have already expired at the
-  time of presentation.
+  MAY include credentials whose "valid_until" is in the past at
+  the time of presentation; in that case the OP MUST set the
+  "trust_status" member of the "verification" object to "expired"
+  (see {{trust-status-registry}}) so that the RP can act on the
+  signal.  Whether to accept an expired credential is outside the
+  scope of this specification and is governed by deployment
+  policy, the applicable trust framework, and any agreements
+  between the OP and the RP.
 
 verified_at
 : A NumericDate indicating when the OP verified the credential
@@ -889,6 +890,7 @@ a W3C Verifiable Credential where "type" is an array:
   "issuer": "https://university.example.edu",
   "verified_at": 1722772700,
   "verification": {
+    "trust_status": "not_checked",
     "holder_binding": "key_binding"
   },
   "claims": {
@@ -1488,9 +1490,13 @@ When the RP supplied a "dcql_query" member in the OIDC "claims"
 request parameter, the OP MUST use that query as the DCQL query
 sent to the wallet, subject to the following:
 
-*  The OP MAY augment the query with additional Credential Queries
-   derived from credential type scopes not covered by the RP's
-   "dcql_query", using the scope-based rules above.
+*  The OP MUST augment the query with additional Credential
+   Queries derived from any credential type scopes in the
+   authorization request that are not already covered by the RP's
+   "dcql_query", using the scope-based rules above.  This ensures
+   that credentials identified by requested scopes are always
+   collected, regardless of whether the RP included them in its
+   "dcql_query".
 *  Each Credential Query "id" in the RP's "dcql_query" MUST
    correspond to a key in "credential_presentations_supported".
 *  The OP MUST NOT relax any constraint expressed by the RP.  In
