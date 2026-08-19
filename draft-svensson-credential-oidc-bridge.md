@@ -1269,11 +1269,13 @@ entity identifier), it MUST enforce the following safeguards:
 
 *  The OP SHOULD cache dereferenced trust material and enforce a
    minimum refresh interval to limit the impact of a compromised or
-   unavailable trust list endpoint.
+   unavailable remote trust material source.
 
 *  If an external trust reference cannot be fetched or parsed, the
-   OP MUST treat it as if no issuers were listed for that entry.
-   The OP MUST NOT fall back to accepting all issuers.
+   OP MUST treat that "trusted_authorities" entry as contributing
+   no authorities.  Other entries in the same "trusted_authorities"
+   array that were successfully resolved still apply.  The OP MUST
+   NOT treat an unresolved entry as matching all authorities.
 
 ## Privacy Considerations
 
