@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-18T00:49:35.095363+00:00",
+  "timestamp": "2026-08-20T00:50:03.800548+00:00",
   "repo": "masv3971/rfc_credential_oidc_bridge",
   "labels": [
     {
@@ -254,13 +254,13 @@
       "labels": [],
       "body": "",
       "createdAt": "2026-08-14T13:35:29Z",
-      "updatedAt": "2026-08-17T13:45:05Z",
+      "updatedAt": "2026-08-19T07:26:53Z",
       "baseRepository": "masv3971/rfc_credential_oidc_bridge",
       "baseRefName": "main",
       "baseRefOid": "e0c6c281feba6e5f005cf9c5583d9584c55c5802",
       "headRepository": "masv3971/rfc_credential_oidc_bridge",
       "headRefName": "masv/editorial",
-      "headRefOid": "fdc62d1b2e4dd5e4afe1582c50889cc3a9e543be",
+      "headRefOid": "2b22998924f2703cd3a06920ed7581ee65b8cf65",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -323,6 +323,58 @@
           "body": "Copilot encountered an error and was unable to review this pull request. You can try again by re-requesting a review.",
           "createdAt": "2026-08-17T13:45:05Z",
           "updatedAt": "2026-08-17T13:45:05Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABJ34aZA",
+          "commit": {
+            "abbreviatedOid": "fdc62d1"
+          },
+          "author": "ubamrein",
+          "authorAssociation": "NONE",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2026-08-18T05:31:00Z",
+          "updatedAt": "2026-08-18T05:31:00Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABJ5No-A",
+          "commit": {
+            "abbreviatedOid": "fdc62d1"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nCopilot reviewed 2 out of 2 changed files in this pull request and generated no new comments.\n\n\n\n\n<details>\n<summary>Suppressed comments (6)</summary>\n\n**draft-svensson-credential-oidc-bridge.md:1493**\n* In DCQL-based mode you state that scopes identify which credentials to collect, but here the OP only \"MAY\" augment the RP's dcql_query with scope-derived queries. That makes it possible for an OP to ignore requested scopes if the RP's dcql_query omits them, which conflicts with the earlier requirement.\n```\n*  The OP MAY augment the query with additional Credential Queries\n   derived from credential type scopes not covered by the RP's\n   \"dcql_query\", using the scope-based rules above.\n```\n**draft-svensson-credential-oidc-bridge.md:663**\n* This non-normative Credential Entry example includes a verification object later in the JSON but omits verification.trust_status, which conflicts with the requirement that if the OP did not perform a trust-status check it MUST set trust_status to \"not_checked\" rather than omitting it.\n```\n          \"type\": [\"https://credential.example.org/pda1/1.0\"],\n          \"issuer\": \"https://tax.example.se\",\n          \"valid_from\": 1709251200,\n          \"valid_until\": 1740787200,\n```\n**draft-svensson-credential-oidc-bridge.md:271**\n* In the DCQL profile, the bullets imply both \"path\" and \"values\" are required in each \"claims\" entry, and the \"trusted_authorities\" shape is written as `{\"type\", \"values\"}` which is ambiguous. This contradicts later examples that omit \"values\". Clarify required vs optional members and use an explicit JSON shape for readability.\n```\n*  Within each entry of \"claims\": \"path\" and \"values\".\n*  \"trusted_authorities\" uses the entry shape `{\"type\", \"values\"}`\n   defined in Section 6.1.4 of {{OpenID4VP}}.\n```\n**draft-svensson-credential-oidc-bridge.md:1383**\n* The document says the OP MUST NOT include already-expired credentials (valid_until), but the trust-status registry defines an \"expired\" value. As written, \"expired\" is either unreachable or the \"valid_until\" requirement is too strict; the spec should be internally consistent.\n```\n| revoked | The credential has been revoked by its issuer or trust framework | IETF | {{credential-entry-object}} of this document |\n| expired | The credential has expired according to its own validity period | IETF | {{credential-entry-object}} of this document |\n| invalid | The credential failed one or more verification checks | IETF | {{credential-entry-object}} of this document |\n```\n**draft-svensson-credential-oidc-bridge.md:893**\n* This non-normative W3C VC example includes a verification object but omits trust_status, which conflicts with the requirement to set trust_status to \"not_checked\" when no trust-status check was performed.\n\nThis issue also appears on line 1491 of the same file.\n```\n  \"verification\": {\n    \"holder_binding\": \"key_binding\"\n  },\n```\n**draft-svensson-credential-oidc-bridge.md:646**\n* This non-normative Credential Entry example includes a verification object later in the JSON but omits verification.trust_status, which conflicts with the requirement that if the OP did not perform a trust-status check it MUST set trust_status to \"not_checked\" rather than omitting it.\n\nThis issue also appears on line 660 of the same file.\n```\n          \"type\": [\"https://credential.example.org/ehic/1.0\"],\n          \"issuer\": \"https://svs.example.se\",\n          \"valid_from\": 1709251200,\n          \"valid_until\": 1740787200,\n```\n</details>\n\n",
+          "createdAt": "2026-08-18T08:26:28Z",
+          "updatedAt": "2026-08-18T08:26:28Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABJ7tuKg",
+          "commit": {
+            "abbreviatedOid": "150c631"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nCopilot reviewed 2 out of 2 changed files in this pull request and generated no new comments.\n\n\n\n\n<details>\n<summary>Suppressed comments (2)</summary>\n\n**draft-svensson-credential-oidc-bridge.md:1276**\n* This bullet describes dereferencing \"trusted_authorities\" entries, but then says \"as if no issuers were listed\". Since the dereferenced material may represent authorities/trust material (not a literal issuer list), the wording should be aligned with \"trusted_authorities\".\n```\n*  If an external trust reference cannot be fetched or parsed, the\n   OP MUST treat it as if no issuers were listed for that entry.\n   The OP MUST NOT fall back to accepting all issuers.\n```\n**draft-svensson-credential-oidc-bridge.md:1272**\n* In this section the text was broadened from trust lists to general external trust-material dereferencing (e.g., OpenID Federation). The phrase \"trust list endpoint\" is now too narrow and should be generalized to avoid implying only trust lists are in scope.\n\nThis issue also appears on line 1274 of the same file.\n```\n*  The OP SHOULD cache dereferenced trust material and enforce a\n   minimum refresh interval to limit the impact of a compromised or\n   unavailable trust list endpoint.\n```\n</details>\n\n",
+          "createdAt": "2026-08-18T13:30:15Z",
+          "updatedAt": "2026-08-18T13:30:15Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABKDQirw",
+          "commit": {
+            "abbreviatedOid": "2b22998"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nCopilot reviewed 2 out of 2 changed files in this pull request and generated no new comments.\n\n\n\n\n<details>\n<summary>Suppressed comments (3)</summary>\n\n**draft-svensson-credential-oidc-bridge.md:1080**\n* Same issue here: RFC8259 doesn\u2019t define \u201cJSON value equality\u201d. If the spec requires a specific matching algorithm for comparing returned claim values to the requested \"values\" entries, it should define that algorithm (or reference an appropriate spec) rather than attributing it to RFC8259.\n```\n*  If a claim query in the RP's \"dcql_query\" specifies a \"values\"\n   array and the disclosed claim value does not match any entry\n   (using JSON value equality as defined in {{RFC8259}}), the\n   credential MUST be treated as not satisfying the query.\n```\n**draft-svensson-credential-oidc-bridge.md:560**\n* The reference to \u201cJSON value equality as defined in RFC8259\u201d is problematic because RFC8259 defines JSON syntax/interop but does not define an equality relation for JSON values. Consider defining the equality semantics in this document (e.g., structural equality of parsed JSON values) rather than citing RFC8259 as the source of the equality definition.\n\nThis issue also appears on line 1077 of the same file.\n```\n3.  Validate that the expected claims are present in each\n    Credential Entry's \"claims\" object.  If the RP specified a\n    \"values\" constraint for a claim, verify that the returned\n    value matches at least one entry in that \"values\" array (using\n    JSON value equality as defined in {{RFC8259}}).\n```\n**draft-svensson-credential-oidc-bridge.md:701**\n* The reserved Credential Set member \"id\" is described as an OPTIONAL string, but it\u2019s used as an identifier for correlating alternatives. Tightening this to a non-empty string avoids edge cases like empty-string IDs (which can be hard to distinguish from \u201cabsent\u201d in some implementations/logging).\n```\nid\n: OPTIONAL string.  When the RP used the DCQL-based mode\n  ({{dcql-based-requests}}) and supplied a \"credential_sets\" entry\n  with an \"id\", the OP MAY echo that \"id\" here to allow the RP to\n  identify which Credential Set was satisfied.  The value is\n```\n</details>\n\n",
+          "createdAt": "2026-08-19T07:26:52Z",
+          "updatedAt": "2026-08-19T07:26:53Z",
           "comments": []
         }
       ]
