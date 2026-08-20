@@ -265,20 +265,22 @@ section and are not restated here.
 
 This profile applies the following additional restrictions:
 
-*  The DCQL "claim_sets" member MUST NOT be used.  RPs that need
-   alternation between different combinations of claims SHOULD
-   express it as multiple Credential Queries linked via
+*  The DCQL "claim_sets" member MUST NOT be used; express claim
+   alternation via multiple Credential Queries linked from
    "credential_sets".
-*  The "format" of each Credential Query MUST be one of the
-   formats listed in the OP's "credential_presentations_supported"
-   discovery metadata (see {{credential-mapping}}).
-*  The "id" of each Credential Query MUST match a key in the OP's
-   "credential_presentations_supported" discovery metadata.  If
-   the OP receives an unknown "id", it MUST return an OIDC error
-   response with error code "invalid_request".
-*  When "claims" is omitted from a Credential Query, the OP
-   applies the pre-registered claim set for the credential type
-   identified by "id", matching the semantics of scope-based mode.
+
+*  Each Credential Query MUST identify a credential type (via
+   "format" and the format-specific type identifier in "meta")
+   that matches an entry in "credential_presentations_supported"
+   whose scope value is present in the authorization request.
+   Otherwise the OP MUST return "invalid_request".
+
+*  Credential Query "id" values are opaque to the OP (per
+   Section 6 of {{OpenID4VP}}) and are used only as response
+   keys and as references from "credential_sets".
+
+*  When "claims" is omitted, the OP applies the pre-registered
+   claim set of the matched entry.
 
 The "credential_sets" member expresses combinatorial logic over
 Credential Queries as defined in Section 6.3 of {{OpenID4VP}}.
@@ -1050,9 +1052,10 @@ The binding is:
 
 When the RP additionally supplied a "dcql_query" in the OIDC
 "claims" request parameter ({{dcql-based-requests}}), the OP MUST
-use the DCQL Credential Query "id" values from the RP's query as
-the keys in the "presented_credentials" response.  Each "id" MUST
-correspond to a key in "credential_presentations_supported".
+use the RP-chosen Credential Query "id" values as the keys in the
+"presented_credentials" response.  Correlation to
+"credential_presentations_supported" is by credential type, per
+{{dcql-based-requests}}.
 
 Response construction rules:
 
@@ -1492,18 +1495,17 @@ When the RP supplied a "dcql_query" member in the OIDC "claims"
 request parameter, the OP MUST use that query as the DCQL query
 sent to the wallet, subject to the following:
 
-*  The OP MUST augment the query with additional Credential
-   Queries derived from any credential type scopes in the
-   authorization request that are not already covered by the RP's
-   "dcql_query", using the scope-based rules above.  This ensures
-   that credentials identified by requested scopes are always
-   collected, regardless of whether the RP included them in its
-   "dcql_query".
-*  Each Credential Query "id" in the RP's "dcql_query" MUST
-   correspond to a key in "credential_presentations_supported".
-*  The OP MUST NOT relax any constraint expressed by the RP.  In
-   particular, the OP MUST NOT drop "trusted_authorities" or widen
-   "values" arrays before sending the query to the wallet.
+*  RP-supplied Credential Query "id" values are forwarded to the
+   wallet unchanged.
+*  Each Credential Query MUST satisfy the type and scope checks
+   of {{dcql-based-requests}}; otherwise the OP MUST reject the
+   request.
+*  The OP MUST augment the query with Credential Queries derived
+   from any requested scopes not already covered, using the
+   scope-based rules above, and MUST NOT reuse an "id" supplied
+   by the RP.
+*  The OP MUST NOT relax any constraint expressed by the RP
+   (e.g., MUST NOT drop "trusted_authorities" or widen "values").
 
 ## Response Mapping
 
