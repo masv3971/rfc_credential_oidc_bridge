@@ -557,7 +557,7 @@ definition.  Specifically, the RP MUST:
     Credential Entry's "claims" object.  If the RP specified a
     "values" constraint for a claim, verify that the returned
     value matches at least one entry in that "values" array (using
-    JSON value equality as defined in {{RFC8259}}).
+    the matching rules in {{app-value-matching}}).
 
 4.  For each Credential Entry that carries a "verification.crit"
     array, the RP MUST recognise and understand every listed
@@ -1076,7 +1076,7 @@ Constraint enforcement rules:
 
 *  If a claim query in the RP's "dcql_query" specifies a "values"
    array and the disclosed claim value does not match any entry
-   (using JSON value equality as defined in {{RFC8259}}), the
+   (using the matching rules in {{app-value-matching}}), the
    credential MUST be treated as not satisfying the query.
 *  If the RP's "dcql_query" specifies "trusted_authorities" for a
    Credential Query and the presented credential does not chain to
@@ -1539,6 +1539,32 @@ binding.  Its inclusion is intended to make the extension pattern
 explicit: bindings for additional presentation protocols may be
 added here without changing the protocol-agnostic contract in
 {{credential-mapping}}.
+
+# Claim Value Matching {#app-value-matching}
+
+Several normative rules in this specification require comparing a
+disclosed claim value against entries in a "values" array.  A
+disclosed value matches an entry if and only if both are of the
+same JSON type (as defined in {{RFC8259}}) and are equal under the
+following rules:
+
+*  Strings are compared as sequences of Unicode code points.  No
+   Unicode normalization, case folding, or whitespace trimming is
+   applied.
+
+*  Numbers are compared by mathematical value, independent of their
+   lexical representation (for example, "1", "1.0", and "1e0" all
+   match).
+
+*  Boolean values match only the identical boolean, and the null
+   value matches only null.
+
+Values of different JSON types never match (for example, the string
+"1" does not match the number 1).  Objects and arrays are not
+expected in "values" entries; if present, they MUST be compared
+structurally, with member and element equality determined
+recursively by these same rules and object member order treated as
+insignificant.
 
 # Acknowledgments
 {:numbered="false"}
