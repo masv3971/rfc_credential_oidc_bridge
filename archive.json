@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-20T00:50:03.800548+00:00",
+  "timestamp": "2026-08-23T00:54:32.306067+00:00",
   "repo": "masv3971/rfc_credential_oidc_bridge",
   "labels": [
     {
@@ -254,13 +254,13 @@
       "labels": [],
       "body": "",
       "createdAt": "2026-08-14T13:35:29Z",
-      "updatedAt": "2026-08-19T07:26:53Z",
+      "updatedAt": "2026-08-21T14:16:25Z",
       "baseRepository": "masv3971/rfc_credential_oidc_bridge",
       "baseRefName": "main",
       "baseRefOid": "e0c6c281feba6e5f005cf9c5583d9584c55c5802",
       "headRepository": "masv3971/rfc_credential_oidc_bridge",
       "headRefName": "masv/editorial",
-      "headRefOid": "2b22998924f2703cd3a06920ed7581ee65b8cf65",
+      "headRefOid": "c30d850739c2dd1bb48eff84d1bbf455d2b8b1aa",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -375,6 +375,65 @@
           "body": "## Pull request overview\n\nCopilot reviewed 2 out of 2 changed files in this pull request and generated no new comments.\n\n\n\n\n<details>\n<summary>Suppressed comments (3)</summary>\n\n**draft-svensson-credential-oidc-bridge.md:1080**\n* Same issue here: RFC8259 doesn\u2019t define \u201cJSON value equality\u201d. If the spec requires a specific matching algorithm for comparing returned claim values to the requested \"values\" entries, it should define that algorithm (or reference an appropriate spec) rather than attributing it to RFC8259.\n```\n*  If a claim query in the RP's \"dcql_query\" specifies a \"values\"\n   array and the disclosed claim value does not match any entry\n   (using JSON value equality as defined in {{RFC8259}}), the\n   credential MUST be treated as not satisfying the query.\n```\n**draft-svensson-credential-oidc-bridge.md:560**\n* The reference to \u201cJSON value equality as defined in RFC8259\u201d is problematic because RFC8259 defines JSON syntax/interop but does not define an equality relation for JSON values. Consider defining the equality semantics in this document (e.g., structural equality of parsed JSON values) rather than citing RFC8259 as the source of the equality definition.\n\nThis issue also appears on line 1077 of the same file.\n```\n3.  Validate that the expected claims are present in each\n    Credential Entry's \"claims\" object.  If the RP specified a\n    \"values\" constraint for a claim, verify that the returned\n    value matches at least one entry in that \"values\" array (using\n    JSON value equality as defined in {{RFC8259}}).\n```\n**draft-svensson-credential-oidc-bridge.md:701**\n* The reserved Credential Set member \"id\" is described as an OPTIONAL string, but it\u2019s used as an identifier for correlating alternatives. Tightening this to a non-empty string avoids edge cases like empty-string IDs (which can be hard to distinguish from \u201cabsent\u201d in some implementations/logging).\n```\nid\n: OPTIONAL string.  When the RP used the DCQL-based mode\n  ({{dcql-based-requests}}) and supplied a \"credential_sets\" entry\n  with an \"id\", the OP MAY echo that \"id\" here to allow the RP to\n  identify which Credential Set was satisfied.  The value is\n```\n</details>\n\n",
           "createdAt": "2026-08-19T07:26:52Z",
           "updatedAt": "2026-08-19T07:26:53Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABKQZOaQ",
+          "commit": {
+            "abbreviatedOid": "b95f6eb"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nCopilot reviewed 2 out of 2 changed files in this pull request and generated no new comments.\n\n\n\n\n<details>\n<summary>Suppressed comments (4)</summary>\n\n**draft-svensson-credential-oidc-bridge.md:1504**\n* In the DCQL binding appendix, the rules still allow a \"dcql_query\" to include Credential Query ids that were not requested as scopes (only requiring that they exist in credential_presentations_supported). This contradicts the earlier statement that scopes identify which credentials to collect and should be tightened for consistency.\n```\n*  Each Credential Query \"id\" in the RP's \"dcql_query\" MUST\n   correspond to a key in \"credential_presentations_supported\".\n*  The OP MUST NOT relax any constraint expressed by the RP.  In\n```\n**draft-svensson-credential-oidc-bridge.md:218**\n* The text says scopes identify which credentials to collect, but there is no normative restriction preventing an RP from including additional Credential Queries in \"dcql_query\" for credential types that were not requested as scopes. This creates an inconsistent request contract and can lead to over-collection of credentials beyond what scopes indicate.\n\nThis issue also appears on line 1502 of the same file.\n```\nScopes identify which credentials to collect; the \"dcql_query\"\nmember, when present, refines how they are collected.  If only\nscopes are present, the OP applies its pre-registered mapping for\neach scope.\n```\n**draft-svensson-credential-oidc-bridge.md:271**\n* This profile forbids DCQL \"claim_sets\" but then suggests expressing claim alternation as multiple Credential Queries linked via \"credential_sets\". Since this profile also requires each Credential Query \"id\" to match a key in \"credential_presentations_supported\", the text should clarify that any such alternate Credential Queries must be pre-registered (distinct ids), otherwise the suggested approach is not possible.\n```\n*  The DCQL \"claim_sets\" member MUST NOT be used.  RPs that need\n   alternation between different combinations of claims SHOULD\n   express it as multiple Credential Queries linked via\n   \"credential_sets\".\n```\n**draft-svensson-credential-oidc-bridge.md:278**\n* Requiring Credential Query \"format\" to be merely \"one of the formats listed\" is weaker than the surrounding pre-registration model and allows mismatches (e.g., id \"pid\" but a different supported format). To preserve a stable, pre-registered mapping, the DCQL \"format\" should be required to match the configured format for the same \"id\" (and rejected otherwise).\n```\n*  The \"format\" of each Credential Query MUST be one of the\n   formats listed in the OP's \"credential_presentations_supported\"\n   discovery metadata (see {{credential-mapping}}).\n*  The \"id\" of each Credential Query MUST match a key in the OP's\n   \"credential_presentations_supported\" discovery metadata.  If\n```\n</details>\n\n",
+          "createdAt": "2026-08-20T13:31:11Z",
+          "updatedAt": "2026-08-20T13:31:11Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABKRRmUA",
+          "commit": {
+            "abbreviatedOid": "c30d850"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "## Pull request overview\n\nCopilot reviewed 3 out of 3 changed files in this pull request and generated no new comments.\n\n\n\n\n\n",
+          "createdAt": "2026-08-20T15:00:41Z",
+          "updatedAt": "2026-08-20T15:00:41Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABKatp5Q",
+          "commit": {
+            "abbreviatedOid": "c30d850"
+          },
+          "author": "ubamrein",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2026-08-21T14:02:59Z",
+          "updatedAt": "2026-08-21T14:03:00Z",
+          "comments": [
+            {
+              "originalPosition": 596,
+              "body": "I'm not sure if this in a way contradicts the next section that says\n\n> The RP places trust in the OP to have correctly verified the\npresented credentials \n\nSo in a way we say if OP returns something then it must be valid, but somehow this section reads as if it is the job of the RP to verify that everything is correct. (Besides obvious business rules that can't or won't be represented by a DCQL query)",
+              "createdAt": "2026-08-21T14:03:00Z",
+              "updatedAt": "2026-08-21T14:03:00Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABKa29Bg",
+          "commit": {
+            "abbreviatedOid": "c30d850"
+          },
+          "author": "ubamrein",
+          "authorAssociation": "NONE",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2026-08-21T14:16:25Z",
+          "updatedAt": "2026-08-21T14:16:25Z",
           "comments": []
         }
       ]
