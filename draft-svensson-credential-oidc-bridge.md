@@ -568,11 +568,13 @@ Specifically, the RP MUST:
 2.  Parse the "presented_credentials" array and extract the
     Credential Set objects relevant to its use case.
 
-The RP MUST NOT assume that all requested scopes will be present
-in the response; the user may have declined to present certain
-credentials.  Except for members listed in "verification.crit",
-the RP MUST ignore unrecognised credential keys and unrecognised
-members within Credential Entry objects.
+3.  Not assume that all requested scopes will be present in the
+    response; the user may have declined to present certain
+    credentials.
+
+4.  Except for members listed in "verification.crit", ignore
+    unrecognised credential keys and unrecognised members within
+    Credential Entry objects.
 
 ## Trust Model {#trust-model}
 
@@ -798,8 +800,14 @@ verified_at
 
 verification
 : A JSON object providing metadata about the verification the OP
-  performed on the credential.  This object MAY contain the
-  following members:
+  performed on the credential.  The "verification" object itself
+  is OPTIONAL, but whenever this specification requires the OP to
+  convey a specific member or value within "verification" (for
+  example, setting "trust_status" to "expired" as required by
+  "valid_until", or setting "trust_status" to "not_checked" or
+  "unknown" as required below), the OP MUST include the
+  "verification" object so that the required member can be
+  carried.  This object MAY contain the following members:
 
   holder_binding
   : A string describing the mechanism used to verify that the
