@@ -800,14 +800,12 @@ verified_at
 
 verification
 : A JSON object providing metadata about the verification the OP
-  performed on the credential.  The "verification" object itself
-  is OPTIONAL, but whenever this specification requires the OP to
-  convey a specific member or value within "verification" (for
-  example, setting "trust_status" to "expired" as required by
-  "valid_until", or setting "trust_status" to "not_checked" or
-  "unknown" as required below), the OP MUST include the
-  "verification" object so that the required member can be
-  carried.  This object MAY contain the following members:
+  performed on the credential.  The OP MUST include the
+  "verification" object in every Credential Entry.  If the OP did
+  not perform a trust-status check, it MUST set "trust_status" to
+  "not_checked" (see {{trust-status-registry}}); other members of
+  "verification" MAY be omitted when the corresponding information
+  is unavailable.  This object MAY contain the following members:
 
   holder_binding
   : A string describing the mechanism used to verify that the
@@ -1564,7 +1562,7 @@ following rules:
    applied.
 
 *  Numbers are compared by mathematical value, independent of their
-   lexical representation (for example, "1", "1.0", and "1e0" all
+   lexical representation (for example, `1`, `1.0`, and `1e0` all
    match).
 
 *  Boolean values match only the identical boolean, and the null
@@ -1580,6 +1578,5 @@ insignificant.
 # Acknowledgments
 {:numbered="false"}
 
-The author would like to thank
-Patrick Amrein (Ubique)
-for reviews, comments, and contributions to this document.
+The author would like to thank Patrick Amrein (Ubique) for reviews,
+comments, and contributions to this document.
