@@ -304,7 +304,8 @@ Trusted authority handling:
 *  When a Credential Query includes "trusted_authorities", the OP
    MUST only accept a credential for that query if it chains to at
    least one of the listed authorities.  Credentials that do not
-   MUST be treated as not satisfying the query.
+   chain to any listed authority MUST be treated as not satisfying
+   the query.
 *  If "trusted_authorities" is absent, the OP applies its own
    issuer policy.
 *  Security requirements for dereferencing external trust list
