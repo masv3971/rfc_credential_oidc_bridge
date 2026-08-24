@@ -546,7 +546,20 @@ authenticated user's identity).
 
 The "presented_credentials" claim structure is defined in
 {{presented-credentials-claim}}.  The RP MUST parse the claim according to that
-definition.  Specifically, the RP MUST:
+definition.
+
+Credential authenticity, holder binding, revocation status, and
+enforcement of any DCQL constraints supplied by the RP are the
+responsibility of the OP (see {{trust-model}}); the RP does not
+re-verify the credential.  The "verification" object and other
+validation-related metadata returned by the OP (see
+{{credential-entry-object}}) are informational: the RP MAY use
+them as inputs to its own business logic, policy engine, or audit
+records.  How the RP uses that metadata is a matter of local
+policy and out of scope for this specification, except where
+noted for "verification.crit" in {{credential-entry-object}}.
+
+Specifically, the RP MUST:
 
 1.  Check for the presence of the "presented_credentials" claim.  If
     the claim was requested as essential and is absent, the RP SHOULD
@@ -555,25 +568,13 @@ definition.  Specifically, the RP MUST:
 2.  Parse the "presented_credentials" array and extract the
     Credential Set objects relevant to its use case.
 
-3.  Validate that the expected claims are present in each
-    Credential Entry's "claims" object.  If the RP specified a
-    "values" constraint for a claim, verify that the returned
-    value matches at least one entry in that "values" array (using
-    the matching rules in {{app-value-matching}}).
-
-4.  For each Credential Entry that carries a "verification.crit"
-    array, the RP MUST recognise and understand every listed
-    member of the "verification" object.  If any listed member is
-    unknown or its value is not understood, the RP MUST treat the
-    credential as not satisfying the request.
-
 The RP MUST NOT assume that all requested scopes will be present
 in the response; the user may have declined to present certain
 credentials.  Except for members listed in "verification.crit",
 the RP MUST ignore unrecognised credential keys and unrecognised
 members within Credential Entry objects.
 
-## Trust Model
+## Trust Model {#trust-model}
 
 The RP places trust in the OP to have correctly verified the
 presented credentials.  The RP does not interact with the wallet or
