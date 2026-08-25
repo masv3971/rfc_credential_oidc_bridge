@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-23T00:54:32.306067+00:00",
+  "timestamp": "2026-08-25T00:52:20.235797+00:00",
   "repo": "masv3971/rfc_credential_oidc_bridge",
   "labels": [
     {
@@ -247,24 +247,26 @@
       "id": "PR_kwDOTuxYJM7_HsVI",
       "title": "Masv/editorial",
       "url": "https://github.com/masv3971/rfc_credential_oidc_bridge/pull/2",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "masv3971",
       "authorAssociation": "OWNER",
       "assignees": [],
       "labels": [],
       "body": "",
       "createdAt": "2026-08-14T13:35:29Z",
-      "updatedAt": "2026-08-21T14:16:25Z",
+      "updatedAt": "2026-08-24T14:34:26Z",
       "baseRepository": "masv3971/rfc_credential_oidc_bridge",
       "baseRefName": "main",
       "baseRefOid": "e0c6c281feba6e5f005cf9c5583d9584c55c5802",
       "headRepository": "masv3971/rfc_credential_oidc_bridge",
       "headRefName": "masv/editorial",
-      "headRefOid": "c30d850739c2dd1bb48eff84d1bbf455d2b8b1aa",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "headRefOid": "f34d81b68eaecf783e4ccf3f363764d9f48636bb",
+      "closedAt": "2026-08-24T14:34:23Z",
+      "mergedAt": "2026-08-24T14:34:23Z",
+      "mergedBy": "masv3971",
+      "mergeCommit": {
+        "oid": "8e745fb51a0116ef322afeea5f97cefb03657b38"
+      },
       "comments": [],
       "reviews": [
         {
@@ -435,6 +437,84 @@
           "createdAt": "2026-08-21T14:16:25Z",
           "updatedAt": "2026-08-21T14:16:25Z",
           "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABKm3rfg",
+          "commit": {
+            "abbreviatedOid": "db57d55"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udfe1 Changes recommended\n\nThe updated spec text contains contract/formatting inconsistencies (notably around `verification`/`trust_status` requirements) that should be resolved before merging.\n\n*Once you've addressed the issues Copilot identified, you can request another Copilot review.*\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (1)\n\n**draft-svensson-credential-oidc-bridge.md:814**\n* Within the (currently optional) \"verification\" object, the text for \"trust_status\" imposes unconditional MUST-level requirements (e.g., it MUST be set to \"not_checked\" rather than omitted), which effectively makes the member mandatory whenever \"verification\" is present. Marking it as REQUIRED here makes the contract unambiguous and consistent with the surrounding normative language.\n```\n  trust_status\n  : A string describing the OP's assessment of the credential's\n    trust status at the time of verification.  Values are taken\n    from the \"Credential Trust Status Values\" registry defined in\n    {{trust-status-registry}}.  If the OP did not perform a\n```\n\n- **Files reviewed:** 3/3 changed files\n- **Comments generated:** 2\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-24T10:25:30Z",
+          "updatedAt": "2026-08-24T10:25:31Z",
+          "comments": [
+            {
+              "originalPosition": 620,
+              "body": "The paragraph starting \"The RP MUST NOT assume...\" is part of the normative requirements introduced by \"Specifically, the RP MUST:\" but it is not formatted as a numbered list item, so it renders outside the list and weakens readability/structure of the requirements.",
+              "createdAt": "2026-08-24T10:25:30Z",
+              "updatedAt": "2026-08-24T10:25:31Z"
+            },
+            {
+              "originalPosition": 791,
+              "body": "This text requires setting \"verification.trust_status\" to \"expired\" when returning an expired credential, but the spec currently treats the entire \"verification\" object as optional; clarify that the OP must include \"verification\" in this case so the requirement is implementable as written.\n\nThis issue also appears on line 810 of the same file.",
+              "createdAt": "2026-08-24T10:25:31Z",
+              "updatedAt": "2026-08-24T10:25:31Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABKnvq8g",
+          "commit": {
+            "abbreviatedOid": "47529a3"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udd35 Needs a closer look\n\nThe updated draft contains a few concrete spec text issues (internal inconsistency around `verification` optionality, JSON-number examples shown as strings, and awkward acknowledgments formatting) that should be corrected before merge.\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (3)\n\n**Previously missed (2)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.md:1585**\n* The acknowledgments sentence is split across multiple hard line breaks, which reads awkwardly in rendered Markdown. It should be a single sentence (or a list) for clarity.\n```\nThe author would like to thank\nPatrick Amrein (Ubique)\nfor reviews, comments, and contributions to this document.\n```\n**draft-svensson-credential-oidc-bridge.md:1568**\n* The numeric examples are quoted (\"1\", \"1.0\", \"1e0\"), which makes them JSON strings rather than numbers. Since this section defines JSON-number matching, the examples should be unquoted (and ideally formatted as code).\n```\n*  Numbers are compared by mathematical value, independent of their\n   lexical representation (for example, \"1\", \"1.0\", and \"1e0\" all\n   match).\n```\n\n**draft-svensson-credential-oidc-bridge.md:807**\n* The text says the \"verification\" object is OPTIONAL, but the following sentences and later requirements effectively require it whenever \"trust_status\" (including \"not_checked\"/\"unknown\"/\"expired\") must be conveyed. This is internally inconsistent and could confuse implementers about whether omitting \"verification\" is allowed.\n```\n  performed on the credential.  The \"verification\" object itself\n  is OPTIONAL, but whenever this specification requires the OP to\n  convey a specific member or value within \"verification\" (for\n  example, setting \"trust_status\" to \"expired\" as required by\n  \"valid_until\", or setting \"trust_status\" to \"not_checked\" or\n```\n\n- **Files reviewed:** 3/3 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-24T12:24:05Z",
+          "updatedAt": "2026-08-24T12:24:05Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABKozsow",
+          "commit": {
+            "abbreviatedOid": "9f4d04b"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udd35 Needs a closer look\n\nA normative sentence in the updated spec text contains a grammatical error that should be corrected before merging to avoid ambiguity.\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (1)\n\n**Previously missed (1)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.md:307**\n* The sentence break here results in a grammatical error (\u201cCredentials that do not MUST \u2026\u201d). Rephrase so it\u2019s clear what condition is being negated (i.e., not chaining to a listed authority).\n```\n*  When a Credential Query includes \"trusted_authorities\", the OP\n   MUST only accept a credential for that query if it chains to at\n   least one of the listed authorities.  Credentials that do not\n   MUST be treated as not satisfying the query.\n```\n\n- **Files reviewed:** 3/3 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-24T14:19:42Z",
+          "updatedAt": "2026-08-24T14:19:42Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABKo4rQg",
+          "commit": {
+            "abbreviatedOid": "f34d81b"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udd35 Needs a closer look\n\nIt makes substantial normative specification changes (request modes, discovery metadata, response structure, and new registries) that warrant careful human standards/interoperability review.\n\n<details>\n<summary>Review details</summary>\n\n- **Files reviewed:** 3/3 changed files\n- **Comments generated:** 2\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-24T14:27:27Z",
+          "updatedAt": "2026-08-24T14:27:28Z",
+          "comments": [
+            {
+              "originalPosition": 47,
+              "body": "The PR title suggests this is an editorial change, but this section introduces a new optional DCQL-based request mode (and the rest of the diff adds new registries/metadata and changes response structures). Consider updating the PR title/description to reflect that these are normative protocol changes, so reviewers can route/assess it appropriately.",
+              "createdAt": "2026-08-24T14:27:27Z",
+              "updatedAt": "2026-08-24T14:27:28Z"
+            },
+            {
+              "originalPosition": 692,
+              "body": "Using a top-level reserved member name \"id\" inside Credential Set objects creates a realistic collision risk with existing/legacy scope values or DCQL query identifiers (\"id\" is a plausible scope). A more collision-resistant reserved name (e.g., \"set_id\" or \"_credential_set_id\") would reduce the chance of breaking deployments or confusing generic JSON tooling.",
+              "createdAt": "2026-08-24T14:27:28Z",
+              "updatedAt": "2026-08-24T14:27:28Z"
+            }
+          ]
         }
       ]
     }
