@@ -7,7 +7,6 @@ docname: draft-svensson-credential-oidc-bridge-latest
 submissiontype: IETF
 ipr: trust200902
 area: sec
-workgroup: TBD
 number:
 date:
 consensus: true
