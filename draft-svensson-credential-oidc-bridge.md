@@ -799,7 +799,7 @@ verification
   the OP performed on the credential.  The object MUST contain
   the "trust_status" member defined below; other members MAY be
   omitted when the corresponding information is unavailable.
-  This object MAY contain the following members:
+  Each member's requirement level is stated in its description:
 
   holder_binding
   : A string describing the mechanism used to verify that the
