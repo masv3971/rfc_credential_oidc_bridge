@@ -301,11 +301,12 @@ alternative AND-groups of Credential Query "id"s, plus an OPTIONAL
 per Section 6.3 of {{OpenID4VP}} and return, for each satisfied
 Credential Set, one Credential Set object within the
 "presented_credential_sets" claim (see {{presented-credential-sets-array}})
-whose members are the Credential Queries in the matched AND-group.
-The OPTIONAL "id" of the Credential Set entry MAY be echoed by the
-OP in the response as the "credential_set_id" member of the
-corresponding Credential Set (see {{presented-credential-sets-array}}),
-to help the RP identify which alternative was satisfied.
+whose "credentials" member is keyed by the Credential Query "id"
+values of the matched AND-group.  The OPTIONAL "id" of the
+Credential Set entry MAY be echoed by the OP in the response as
+the "credential_set_id" member of the corresponding Credential
+Set (see {{presented-credential-sets-array}}), to help the RP
+identify which alternative was satisfied.
 
 If "credential_sets" is absent, the OP treats all Credential
 Queries as required, matching the DCQL default behaviour.
