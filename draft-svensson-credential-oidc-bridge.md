@@ -1237,12 +1237,14 @@ for the identity credential's type in
 "subject_claim" is configured for the type, the OP MUST document
 its local selection rule.
 
-The OP SHOULD use pairwise pseudonymous subject identifiers per
-"client_id", derived from the stable identifier via a per-RP,
-deployment-configured transformation (for example, an HMAC keyed
-on the "client_id").  The OP MUST NOT surface a raw credential
-subject identifier as "sub" unless the RP is explicitly
-configured for public subject types.
+The OP SHOULD use pairwise pseudonymous subject identifiers as
+defined in Section 8 of {{OpenID.Core}}, computed per an
+algorithm compatible with the Pairwise Identifier Algorithm of
+Section 8.1 of that specification, so that different RPs receive
+different "sub" values for the same underlying credential
+subject.  The OP MUST NOT surface a raw credential subject
+identifier as "sub" unless the RP is registered for the "public"
+Subject Identifier Type per Section 8 of {{OpenID.Core}}.
 
 If no identity credential can be selected, the OP MUST fail the
 authentication request with OIDC error code "access_denied".
