@@ -819,15 +819,11 @@ verified_at
   freshness of the verification relative to its own requirements.
 
 verification
-: OPTIONAL JSON object providing metadata about the verification
-  the OP performed on the credential.  Omission of the
-  "verification" object is semantically equivalent to a
-  "verification" object containing only `"trust_status":
-  "not_checked"` (see {{trust-status-registry}}).  When the OP
-  includes the object it MUST set "trust_status"; other members
-  of "verification" MAY be omitted when the corresponding
-  information is unavailable.  This object MAY contain the
-  following members:
+: REQUIRED JSON object providing metadata about the verification
+  the OP performed on the credential.  The object MUST contain
+  the "trust_status" member defined below; other members MAY be
+  omitted when the corresponding information is unavailable.
+  This object MAY contain the following members:
 
   holder_binding
   : A string describing the mechanism used to verify that the
@@ -836,14 +832,14 @@ verification
     registry defined in {{holder-binding-registry}}.
 
   trust_status
-  : A string describing the OP's assessment of the credential's
-    trust status at the time of verification.  Values are taken
-    from the "Credential Trust Status Values" registry defined in
-    {{trust-status-registry}}.  If the OP did not perform a
-    trust-status check, the OP MUST set this member to
-    "not_checked" rather than omitting it.  If the OP performed a
-    check but the authoritative source returned no conclusive
-    answer, the OP MUST set this member to "unknown".
+  : REQUIRED string describing the OP's assessment of the
+    credential's trust status at the time of verification.
+    Values are taken from the "Credential Trust Status Values"
+    registry defined in {{trust-status-registry}}.  If the OP
+    did not perform a trust-status check, it MUST set the value
+    to "not_checked".  If a check was performed but the
+    authoritative source returned no conclusive answer, the OP
+    MUST set the value to "unknown".
 
   protected_headers
   : A JSON object echoing selected verified protected-header
