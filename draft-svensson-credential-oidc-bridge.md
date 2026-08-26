@@ -1742,13 +1742,13 @@ would not satisfy the request.
 When a disclosed credential fails post-presentation "values"
 re-validation, the OP MUST treat the wallet as not having
 disclosed a matching credential for the corresponding Credential
-Query.  If that leaves a Credential Query marked `"required":
-true` in the enclosing "credential_sets" option unsatisfied, and
-no other Credential Query satisfies the option, the OP MUST
-return an OIDC error response with error code "access_denied".
-The OP MUST NOT silently drop the offending Credential Entry from
-the "presented_credential_sets" response while retaining other
-disclosed claims from the same credential.
+Query.  If that failure leaves a "credential_sets" entry marked
+`"required": true` unsatisfied under every one of its "options"
+AND-groups, the OP MUST return an OIDC error response with error
+code "access_denied".  The OP MUST NOT silently drop the
+offending Credential Entry from the "presented_credential_sets"
+response while retaining other disclosed claims from the same
+credential.
 
 # DIDComm Binding {#app-didcomm-binding}
 
