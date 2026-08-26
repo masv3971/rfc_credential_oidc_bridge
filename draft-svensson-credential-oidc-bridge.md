@@ -747,7 +747,13 @@ ignore them.
 
 Each Credential Entry object represents a single credential
 presented during the presentation flow.  It MUST contain the
-following members:
+"type" and "verification" members and exactly one of the
+"claims" or "namespaces" members, all defined below.  The choice
+between "claims" and "namespaces" depends on the credential
+format: formats without namespaces use "claims"; credential
+formats that need to preserve the mapping of claims to their
+originating namespace (e.g., ISO mdoc with disclosed claims from
+more than one namespace) use "namespaces".
 
 type
 : A non-empty JSON array of strings identifying the credential
@@ -771,18 +777,7 @@ claims
   the credential.  Each key is a claim name and each value is the
   claim value.  Claim names are determined by the credential type
   and MUST be strings.  Claim values MAY be any valid JSON type.
-  A Credential Entry MUST contain exactly one of "claims" or
-  "namespaces" (the latter is defined below); Credential Entries
-  for credential formats without namespaces always use "claims".
-
-It MAY contain the following additional members:
-
-issuer
-: A string identifying the entity that issued the credential.  For
-  SD-JWT VC credentials this is the "iss" claim value, for mdoc
-  credentials it is the issuing authority identifier.  The OP
-  SHOULD populate this field to allow the RP to make issuer-aware
-  authorization decisions.
+  MUST NOT be present when "namespaces" is present.
 
 namespaces
 : A JSON object mapping credential-format-specific namespace
@@ -793,30 +788,9 @@ namespaces
   claims within that namespace.  For mdoc credentials that
   disclose claims from more than one namespace, the OP MUST use
   "namespaces" to preserve the mapping between claims and their
-  originating namespace.  When "namespaces" is present, the
-  "claims" member MUST NOT also be present at the Credential
-  Entry root.  For credential formats that do not use namespaces
-  this member MUST NOT be present.
-
-valid_from
-: A NumericDate (as defined in {{RFC7519}}) indicating when the
-  credential became valid (i.e., the issuance or activation date).
-
-valid_until
-: A NumericDate indicating when the credential expires.  The OP
-  MAY include credentials whose "valid_until" is in the past at
-  the time of presentation; in that case the OP MUST set the
-  "trust_status" member of the "verification" object to "expired"
-  (see {{trust-status-registry}}) so that the RP can act on the
-  signal.  Whether to accept an expired credential is outside the
-  scope of this specification and is governed by deployment
-  policy, the applicable trust framework, and any agreements
-  between the OP and the RP.
-
-verified_at
-: A NumericDate indicating when the OP verified the credential
-  during the presentation flow.  This allows the RP to assess the
-  freshness of the verification relative to its own requirements.
+  originating namespace.  MUST NOT co-exist with "claims" at the
+  Credential Entry root, and MUST NOT be present for credential
+  formats that do not use namespaces.
 
 verification
 : REQUIRED JSON object providing metadata about the verification
@@ -875,6 +849,35 @@ verification
   Additional members within the "verification" object MAY be
   present.  Unless listed in "crit", implementations that do not
   recognise additional members MUST ignore them.
+
+It MAY additionally contain the following members:
+
+issuer
+: A string identifying the entity that issued the credential.  For
+  SD-JWT VC credentials this is the "iss" claim value, for mdoc
+  credentials it is the issuing authority identifier.  The OP
+  SHOULD populate this field to allow the RP to make issuer-aware
+  authorization decisions.
+
+valid_from
+: A NumericDate (as defined in {{RFC7519}}) indicating when the
+  credential became valid (i.e., the issuance or activation date).
+
+valid_until
+: A NumericDate indicating when the credential expires.  The OP
+  MAY include credentials whose "valid_until" is in the past at
+  the time of presentation; in that case the OP MUST set the
+  "trust_status" member of the "verification" object to "expired"
+  (see {{trust-status-registry}}) so that the RP can act on the
+  signal.  Whether to accept an expired credential is outside the
+  scope of this specification and is governed by deployment
+  policy, the applicable trust framework, and any agreements
+  between the OP and the RP.
+
+verified_at
+: A NumericDate indicating when the OP verified the credential
+  during the presentation flow.  This allows the RP to assess the
+  freshness of the verification relative to its own requirements.
 
 digest
 : OPTIONAL JSON object providing a one-way digest of the source
