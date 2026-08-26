@@ -777,7 +777,8 @@ claims
   the credential.  Each key is a claim name and each value is the
   claim value.  Claim names are determined by the credential type
   and MUST be strings.  Claim values MAY be any valid JSON type.
-  MUST NOT be present when "namespaces" is present.
+  The "claims" member MUST NOT be present when "namespaces" is
+  present.
 
 namespaces
 : A JSON object mapping credential-format-specific namespace
@@ -788,9 +789,9 @@ namespaces
   claims within that namespace.  For mdoc credentials that
   disclose claims from more than one namespace, the OP MUST use
   "namespaces" to preserve the mapping between claims and their
-  originating namespace.  MUST NOT co-exist with "claims" at the
-  Credential Entry root, and MUST NOT be present for credential
-  formats that do not use namespaces.
+  originating namespace.  The "namespaces" member MUST NOT co-
+  exist with "claims" at the Credential Entry root, and MUST NOT
+  be present for credential formats that do not use namespaces.
 
 verification
 : REQUIRED JSON object providing metadata about the verification
