@@ -850,7 +850,8 @@ verification
   present.  Unless listed in "crit", implementations that do not
   recognise additional members MUST ignore them.
 
-It MAY additionally contain the following members:
+The Credential Entry MAY additionally contain the following
+members at its root:
 
 issuer
 : A string identifying the entity that issued the credential.  For
