@@ -790,8 +790,9 @@ namespaces
   disclose claims from more than one namespace, the OP MUST use
   "namespaces" to preserve the mapping between claims and their
   originating namespace.  The "namespaces" member MUST NOT co-
-  exist with "claims" at the Credential Entry root, and MUST NOT
-  be present for credential formats that do not use namespaces.
+  exist with "claims" at the Credential Entry root.  The
+  "namespaces" member MUST NOT be present for credential formats
+  that do not use namespaces.
 
 verification
 : REQUIRED JSON object providing metadata about the verification
