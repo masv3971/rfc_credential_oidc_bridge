@@ -1445,9 +1445,14 @@ entity identifier), it MUST enforce the following safeguards:
    entry as contributing no authorities.  When every entry in the
    same "trusted_authorities" array is off-allowlist, the OP MUST
    return an OIDC error response with error code
-   "invalid_request" and error description
-   "trusted_authority_not_allowed" so that the RP can distinguish
-   an allowlist rejection from an unsatisfied query.
+   "invalid_request".  To help the RP distinguish this allowlist
+   rejection from an unsatisfied query, the OP SHOULD populate
+   "error_uri" with a deployment-published resource that
+   describes the allowlist policy.  The OP MAY additionally
+   include a human-readable hint (for example the token
+   "trusted_authority_not_allowed") in "error_description", but
+   because "error_description" is intended for human consumption
+   RPs MUST NOT rely on machine-parsing it.
    Off-allowlist entries in an array that also contains at least
    one on-allowlist entry MUST be silently ignored; the request
    proceeds with the remaining entries.
