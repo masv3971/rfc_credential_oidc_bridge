@@ -34,6 +34,7 @@ author:
     email: joel@siros.org
 
 normative:
+  RFC7515:
   RFC7519:
   RFC8126:
   RFC8259:
@@ -834,7 +835,7 @@ verification
   : A JSON array of non-empty strings, each naming another member
     of the same "verification" object that the RP MUST understand
     to accept the credential.  Semantics are modelled after the
-    "crit" Header Parameter of Section 4.1.11 of RFC 7515.  If the
+    "crit" Header Parameter of Section 4.1.11 of {{RFC7515}}.  If the
     RP does not recognise every member listed in "crit", or does
     not understand the semantics assigned to the listed member's
     value, the RP MUST treat the credential as not satisfying the
