@@ -175,12 +175,13 @@ Wallet
   can present them to a verifier upon request.
 
 Credential Set
-: A JSON object within the "presented_credential_sets" array with
-  two members: an OPTIONAL "credential_set_id" (a string that
-  echoes an RP-supplied DCQL Credential Set id) and a REQUIRED
+: A JSON object within the "presented_credential_sets" array
+  carrying an OPTIONAL "credential_set_id" (a string that echoes
+  an RP-supplied DCQL Credential Set id) and a REQUIRED
   "credentials" (an object mapping each credential type scope
   value or DCQL Credential Query id to an array of Credential
-  Entry objects).
+  Entry objects).  Additional members MAY also be present (see
+  {{presented-credential-sets-array}}).
 
 Credential Entry
 : A JSON object representing a single credential presented during
@@ -769,6 +770,9 @@ claims
   the credential.  Each key is a claim name and each value is the
   claim value.  Claim names are determined by the credential type
   and MUST be strings.  Claim values MAY be any valid JSON type.
+  A Credential Entry MUST contain exactly one of "claims" or
+  "namespaces" (the latter is defined below); Credential Entries
+  for credential formats without namespaces always use "claims".
 
 It MAY contain the following additional members:
 
@@ -788,10 +792,10 @@ namespaces
   claims within that namespace.  For mdoc credentials that
   disclose claims from more than one namespace, the OP MUST use
   "namespaces" to preserve the mapping between claims and their
-  originating namespace.  When "namespaces" is present for an
-  mdoc credential the "claims" member MUST NOT also be present
-  at the Credential Entry root.  For credential formats that do
-  not use namespaces this member MUST NOT be present.
+  originating namespace.  When "namespaces" is present, the
+  "claims" member MUST NOT also be present at the Credential
+  Entry root.  For credential formats that do not use namespaces
+  this member MUST NOT be present.
 
 valid_from
 : A NumericDate (as defined in {{RFC7519}}) indicating when the
@@ -1023,10 +1027,10 @@ the "type" value declared in this mapping.
 An OP that additionally supports the DCQL-based request mode
 ({{dcql-based-requests}}) MUST include a JSON boolean member
 "dcql_query_supported" in its discovery metadata with the value
-`true`.  This member is OPTIONAL; if it is absent, RPs MUST treat
-it as if it were present with the value `false`.  An OP that does
-not support the DCQL-based mode MAY omit the member or set it
-explicitly to `false`.
+`true`.  An OP that does not support the DCQL-based mode MAY
+either omit the member or set it explicitly to `false`.  RPs
+MUST treat an absent "dcql_query_supported" member as if it
+were present with the value `false`.
 
 The following is a non-normative example of an RP discovering the
 OP's supported credential types:
@@ -1049,11 +1053,11 @@ Content-Type: application/json
   "credential_presentations_supported": {
     "ehic": {
       "format": "dc+sd-jwt",
-      "type": "urn:eu.europa.ec.eudi:ehic:1"
+      "type": ["urn:eu.europa.ec.eudi:ehic:1"]
     },
     "pda1": {
       "format": "dc+sd-jwt",
-      "type": "urn:eu.europa.ec.eudi:pda1:1"
+      "type": ["urn:eu.europa.ec.eudi:pda1:1"]
     }
   }
 }
@@ -1091,7 +1095,7 @@ MUST:
 
 5.  Extract the disclosed claims from each verified credential.
 
-6.  Construct the "presented_credential_sets" object as defined in
+6.  Construct the "presented_credential_sets" array as defined in
     {{presented-credential-sets-array}}.
 
 7.  Include the "presented_credential_sets" claim in the ID Token, the
@@ -1250,7 +1254,7 @@ or URL fragments, which impose practical size limits.  Browser URL
 length limits are commonly around 2048 bytes, and many HTTP servers
 reject headers exceeding 8192 bytes.  When multiple credentials with
 many disclosed claims are included in the "presented_credential_sets"
-object, the resulting token may exceed these limits.
+array, the resulting token may exceed these limits.
 
 Implementations SHOULD consider the following mitigations:
 
@@ -1280,7 +1284,7 @@ Wallet timeout
 Invalid credentials
 : The wallet presents credentials that fail verification (expired,
   revoked, untrusted issuer).  The OP MUST NOT include unverified
-  credential claims in the "presented_credential_sets" object.  The OP
+  credential claims in the "presented_credential_sets" claim.  The OP
   MAY proceed without those credentials or fail the authentication.
 
 Partial presentation
@@ -1406,7 +1410,7 @@ ID Token (which may be exposed in browser history or logs).
 ## Claim Injection
 
 The OP MUST NOT allow external parties to inject or modify claims
-within the "presented_credential_sets" object.  The OP MUST populate this
+within the "presented_credential_sets" claim.  The OP MUST populate this
 claim exclusively from verified credential presentations.  The ID
 Token MUST be signed by the OP to protect integrity.
 
@@ -1608,10 +1612,12 @@ OP constructs one DCQL Credential Query as follows:
    "id".
 *  The "format" is taken from the corresponding entry in
    "credential_presentations_supported".
-*  The "meta" member is populated from the entry's "type": for
-   the `dc+sd-jwt` format the OP sets `meta.vct_values` to a JSON
-   array containing the "type" string; for the `mso_mdoc` format
-   the OP sets `meta.doctype_value` to the "type" string.
+*  The "meta" member is populated from the entry's "type" array:
+   for the `dc+sd-jwt` format the OP sets `meta.vct_values` to
+   the same array of strings; for the `mso_mdoc` format the OP
+   sets `meta.doctype_value` to the single element of the "type"
+   array (see {{discovery}} for the constraint that mdoc "type"
+   arrays contain exactly one element).
 *  The "claims" array is either omitted or set to the deployment's
    pre-registered claim set for the credential type.
 
@@ -1622,11 +1628,11 @@ For example, given the discovery metadata:
   "credential_presentations_supported": {
     "ehic": {
       "format": "dc+sd-jwt",
-      "type": "urn:eu.europa.ec.eudi:ehic:1"
+      "type": ["urn:eu.europa.ec.eudi:ehic:1"]
     },
     "pda1": {
       "format": "dc+sd-jwt",
-      "type": "urn:eu.europa.ec.eudi:pda1:1"
+      "type": ["urn:eu.europa.ec.eudi:pda1:1"]
     }
   }
 }
