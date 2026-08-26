@@ -207,8 +207,8 @@ request modes:
    The value is a DCQL query {{OpenID4VP}} constrained to the
    profile defined in {{dcql-based-requests}}.
 
-Deployments operating under trust frameworks that require pre-
-registered credential queries (for example, EUDI and the Swiss
+Deployments operating under trust frameworks that require
+pre-registered credential queries (for example, EUDI and the Swiss
 Trust Framework) MUST NOT advertise "dcql_query_supported" as
 `true`.  An RP that sends a "dcql_query" to such an OP will
 receive an "invalid_request" error per {{dcql-based-requests}}.
@@ -269,8 +269,8 @@ section and are not restated here.
 
 This profile applies the following additional restrictions:
 
-*  The DCQL "claim_sets" member MAY be used to express claim-
-   level alternation within a single Credential Query (for
+*  The DCQL "claim_sets" member MAY be used to express
+   claim-level alternation within a single Credential Query (for
    example, "family_name OR given_name from this PID").  When
    present, the OP MUST forward "claim_sets" to the wallet
    unchanged and MUST validate after presentation that the
@@ -793,8 +793,8 @@ namespaces
   claims within that namespace.  For mdoc credentials that
   disclose claims from more than one namespace, the OP MUST use
   "namespaces" to preserve the mapping between claims and their
-  originating namespace.  The "namespaces" member MUST NOT co-
-  exist with "claims" at the Credential Entry root.  The
+  originating namespace.  The "namespaces" member MUST NOT
+  co-exist with "claims" at the Credential Entry root.  The
   "namespaces" member MUST NOT be present for credential formats
   that do not use namespaces.
 
@@ -902,8 +902,8 @@ digest
   : The base64url-encoded digest, without padding.
 
   The digest input is credential-format specific.  For SD-JWT VC
-  credentials it is the compact serialization of the issuer-
-  signed JWT concatenated with all disclosed disclosures
+  credentials it is the compact serialization of the
+  issuer-signed JWT concatenated with all disclosed disclosures
   (excluding any Key Binding JWT).  For ISO mdoc credentials it
   is the encoded Mobile Security Object (MSO).  For W3C
   Verifiable Credentials it is the canonicalised proof value.
@@ -1308,8 +1308,8 @@ presentation requests.  For example, the scope "ehic" might trigger a
 request for an EHIC credential with a predefined set of claims.
 
 When using scope-based mapping, the OP SHOULD document the mapping
-between scopes and credential types in its discovery metadata or out-
-of-band documentation.  The OP MUST ensure that the scope semantics
+between scopes and credential types in its discovery metadata or
+out-of-band documentation.  The OP MUST ensure that the scope semantics
 are stable and do not change unexpectedly for registered RPs.
 
 ## Fresh Presentation Requirement {#fresh-presentation}
@@ -1357,8 +1357,8 @@ of scope:
 
 *  *Credential validation policy.* This specification does not define
    which issuers to trust, which revocation mechanisms to check, or
-   what trust frameworks to apply.  These decisions are deployment-
-   specific and determined by the OP operator.
+   what trust frameworks to apply.  These decisions are
+   deployment-specific and determined by the OP operator.
 
 *  *Business logic and authorization decisions.* How the RP
    interprets the received claims -- for example, whether an EHIC
@@ -1490,8 +1490,8 @@ correlation point.  Deployments SHOULD consider the following:
 
 # IANA Considerations
 
-The claim name "presented_credential_sets" was chosen to be protocol-
-agnostic, clearly describing the content (credentials that were
+The claim name "presented_credential_sets" was chosen to be
+protocol-agnostic, clearly describing the content (credentials that were
 presented) without implying a dependency on any particular
 presentation protocol or namespace.
 
