@@ -1754,9 +1754,8 @@ sent to the wallet, subject to the following:
 *  Naming: every OP-augmented Credential Query "id" MUST be the
    string `bridge_` concatenated with the scope value (for
    example, the augmented query for scope "ehic" has
-   `"id": "bridge_ehic"`).  The underscore delimiter keeps the id
-   within the character set required by Section 6.1 of
-   {{OpenID4VP}} (alphanumerics, `_`, and `-`).
+   `"id": "bridge_ehic"`).  The resulting "id" MUST conform to
+   the character set required by Section 6.1 of {{OpenID4VP}}.
 *  Reservation: the RP MUST NOT use a Credential Query "id" that
    begins with `bridge_`.  If any RP-supplied "id" begins with
    `bridge_`, the OP MUST reject the request with OIDC error
