@@ -826,11 +826,14 @@ verification
   : REQUIRED string describing the OP's assessment of the
     credential's trust status at the time of verification.
     Values are taken from the "Credential Trust Status Values"
-    registry defined in {{trust-status-registry}}.  If the OP
-    did not perform a trust-status check, it MUST set the value
-    to "not_checked".  If a check was performed but the
-    authoritative source returned no conclusive answer, the OP
-    MUST set the value to "unknown".
+    registry defined in {{trust-status-registry}}.  When the
+    enclosing "verification" object is present but the OP did
+    not perform a trust-status check, "trust_status" MUST be set
+    to "not_checked"; an OP that has no verification metadata to
+    convey MAY instead omit the entire "verification" object per
+    the introductory paragraph of this section.  When a check
+    was performed but the authoritative source returned no
+    conclusive answer, "trust_status" MUST be set to "unknown".
 
   protected_headers
   : A JSON object echoing selected verified protected-header
