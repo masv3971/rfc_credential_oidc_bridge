@@ -33,6 +33,7 @@ author:
     email: joel@siros.org
 
 normative:
+  RFC6749:
   RFC7515:
   RFC7519:
   RFC8126:
@@ -285,9 +286,11 @@ This profile applies the following additional restrictions:
    whose scope value is present in the authorization request.
    Otherwise the OP MUST return "invalid_request".
 
-*  Credential Query "id" values are opaque to the OP (per
-   Section 6 of {{OpenID4VP}}) and are used only as response
-   keys and as references from "credential_sets".
+*  RP-supplied Credential Query "id" values are opaque to the OP
+   (per Section 6 of {{OpenID4VP}}) with the sole exception of
+   the reserved prefix defined in {{app-dcql-binding}}, and are
+   used only as response keys and as references from
+   "credential_sets".
 
 *  When "claims" is omitted, the OP applies the pre-registered
    claim set of the matched entry.
@@ -657,7 +660,7 @@ containing two credentials:
             "issuer": "https://svs.example.se",
             "valid_from": 1709251200,
             "valid_until": 1740787200,
-            "verified_at": 1722772700,
+            "verified_at": 1722772800,
             "verification": {
               "trust_status": "not_checked",
               "holder_binding": "key_binding"
@@ -675,7 +678,7 @@ containing two credentials:
             "issuer": "https://tax.example.se",
             "valid_from": 1709251200,
             "valid_until": 1740787200,
-            "verified_at": 1722772700,
+            "verified_at": 1722772800,
             "verification": {
               "trust_status": "not_checked",
               "holder_binding": "key_binding"
@@ -729,7 +732,7 @@ credentials
 
 Within the "credentials" object each key MUST be unique.  Keys
 are scope values (in scope-based mode) or DCQL Credential Query
-"id" values (in DCQL-based mode).  The `bridge:` prefix on
+"id" values (in DCQL-based mode).  The `bridge_` prefix on
 Credential Query "id" values is reserved for the OP-augmented
 queries defined in {{app-dcql-binding}}, and RPs MUST NOT use it
 as a scope value or as a Credential Query "id"; other than that
@@ -741,7 +744,11 @@ when the RP requested alternatives via "credential_sets" in the
 DCQL-based mode (see {{requesting-credential-claims}}).  In that
 case the OP MUST return one Credential Set object per satisfied
 DCQL Credential Set entry, in the same order as they appeared in
-the request.
+the request.  In scope-based mode the OP MUST emit Credential
+Sets in lexicographic ascending order of the credential type
+scope value used as the "credentials" object key, so that the
+ordering is deterministic even though OAuth 2.0 scope values are
+unordered per Section 3.3 of {{RFC6749}}.
 
 Additional members within a Credential Set MAY be present.
 Implementations that do not recognise additional members MUST
@@ -1187,6 +1194,12 @@ Response construction rules:
    to the RP.  This ensures data minimization regardless of the
    underlying credential format's selective disclosure
    capabilities.
+*  When "claim_sets" is present on a Credential Query, the OP MUST
+   include in the corresponding Credential Entry only the claims
+   listed in the matched claim-set option, even if the wallet
+   disclosed additional claims covered by other options.  This
+   preserves data minimization when the wallet over-discloses
+   relative to the option that satisfied the query.
 *  When the RP used scope-based mode, or the RP's Credential Query
    omitted "claims", the OP includes the claim set configured for
    that credential type by deployment policy.
@@ -1247,7 +1260,13 @@ The identity credential is selected in this order:
 
 2.  Otherwise, if the first Credential Set in
     "presented_credential_sets" contains exactly one Credential
-    Entry, that entry is the identity credential.
+    Entry, that entry is the identity credential.  "First" is
+    defined by the ordering rules in
+    {{presented-credential-sets-array}}: for DCQL-based mode it
+    is the order in which Credential Set entries appeared in the
+    request; for scope-based mode it is lexicographic ascending
+    by the credential type scope value used as the "credentials"
+    object key.
 
 3.  Otherwise, the selection is implementation-defined and MUST
     be documented by the OP.
@@ -1292,6 +1311,21 @@ Implementations SHOULD consider the following mitigations:
 
 *  Use token introspection or reference tokens where supported by the
    deployment.
+
+## Top-Level Array Claim Compatibility
+
+The "presented_credential_sets" claim is a top-level JSON array
+value.  JWT {{RFC7519}} permits any JSON value as a claim value,
+but a number of claim-mapping components in common deployments
+assume top-level claims are strings, numbers, booleans, or JSON
+objects.  Examples include the Nginx `auth_jwt` module, Keycloak
+protocol mappers, and various JWT-consuming API gateways and
+identity brokers.  Integrators SHOULD verify that any component
+between the OP and the RP application preserves the array shape
+of "presented_credential_sets", and SHOULD consider delivery via
+the UserInfo endpoint (which returns a JSON object with the array
+as one member) when an intermediary cannot pass array-valued JWT
+claims through unchanged.
 
 ## Error Handling
 
@@ -1718,12 +1752,14 @@ sent to the wallet, subject to the following:
    rules of {{app-dcql-binding}} above.  Covered scopes MUST NOT
    be augmented.
 *  Naming: every OP-augmented Credential Query "id" MUST be the
-   string `bridge:` concatenated with the scope value (for
+   string `bridge_` concatenated with the scope value (for
    example, the augmented query for scope "ehic" has
-   `"id": "bridge:ehic"`).
+   `"id": "bridge_ehic"`).  The underscore delimiter keeps the id
+   within the character set required by Section 6.1 of
+   {{OpenID4VP}} (alphanumerics, `_`, and `-`).
 *  Reservation: the RP MUST NOT use a Credential Query "id" that
-   begins with `bridge:`.  If any RP-supplied "id" begins with
-   `bridge:`, the OP MUST reject the request with OIDC error
+   begins with `bridge_`.  If any RP-supplied "id" begins with
+   `bridge_`, the OP MUST reject the request with OIDC error
    code "invalid_request".
 *  The OP MUST NOT relax any constraint expressed by the RP
    (e.g., MUST NOT drop "trusted_authorities" or widen "values").
