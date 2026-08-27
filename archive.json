@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-25T00:52:20.235797+00:00",
+  "timestamp": "2026-08-27T06:32:56.936555+00:00",
   "repo": "masv3971/rfc_credential_oidc_bridge",
   "labels": [
     {
@@ -515,6 +515,236 @@
               "updatedAt": "2026-08-24T14:27:28Z"
             }
           ]
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "id": "PR_kwDOTuxYJM8AAAABBDm5CQ",
+      "title": "Fixing conserncs from implementation.",
+      "url": "https://github.com/masv3971/rfc_credential_oidc_bridge/pull/3",
+      "state": "MERGED",
+      "author": "masv3971",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2026-08-26T09:48:07Z",
+      "updatedAt": "2026-08-26T14:05:28Z",
+      "baseRepository": "masv3971/rfc_credential_oidc_bridge",
+      "baseRefName": "main",
+      "baseRefOid": "8e745fb51a0116ef322afeea5f97cefb03657b38",
+      "headRepository": "masv3971/rfc_credential_oidc_bridge",
+      "headRefName": "masv/fix/implementation_findins",
+      "headRefOid": "9d00d0a2717cf070838bcec5d19707eb0d0b069f",
+      "closedAt": "2026-08-26T14:05:24Z",
+      "mergedAt": "2026-08-26T14:05:24Z",
+      "mergedBy": "masv3971",
+      "mergeCommit": {
+        "oid": "9c12fcf23bd13e4df8d78e1c831981e137f93ac0"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABK8DMUQ",
+          "commit": {
+            "abbreviatedOid": "4f290be"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udfe1 Changes recommended\n\nThe updated spec introduces a few internal inconsistencies (e.g., contradictory discovery requirements and mismatches between new data shapes and existing examples) that should be resolved before approval.\n\n*Once you've addressed the issues Copilot identified, you can request another Copilot review.*\n\n<details>\n<summary>Pull request overview</summary>\n\nThis PR updates the specification text for the credential-to-OIDC bridge, primarily by renaming and restructuring the returned claim payload (from a flat `presented_credentials` mapping to a `presented_credential_sets` array of credential-set objects), and by tightening/clarifying several normative processing rules for DCQL, verification metadata, nonce binding, and OP retention behavior for UserInfo.\n\n**Changes:**\n- Renames the top-level claim to `presented_credential_sets` and defines an explicit Credential Set object shape (`credential_set_id`, `credentials`).\n- Expands DCQL binding/processing rules (e.g., `claim_sets` handling, scope coverage/augmentation rules, post-presentation `values` enforcement).\n- Extends Credential Entry semantics (e.g., `namespaces`, optional `verification`, `digest`, `primary`) and adds rules for deriving `sub`.\n</details>\n\n<details>\n<summary>File summaries</summary>\n\n| File | Description |\r\n| ---- | ----------- |\r\n| draft-svensson-credential-oidc-bridge.md | Updates the spec\u2019s claim naming/structure and adds/clarifies normative processing requirements and examples. |\n</details>\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (3)\n\n**draft-svensson-credential-oidc-bridge.md:1253**\n* \"presented_credential_sets\" is a claim whose value is an array; referring to it as an \"object\" is inaccurate here.\n```\nreject headers exceeding 8192 bytes.  When multiple credentials with\nmany disclosed claims are included in the \"presented_credential_sets\"\nobject, the resulting token may exceed these limits.\n```\n**draft-svensson-credential-oidc-bridge.md:1284**\n* \"presented_credential_sets\" is a claim whose value is an array; referring to it as an \"object\" is inaccurate here.\n```\n: The wallet presents credentials that fail verification (expired,\n  revoked, untrusted issuer).  The OP MUST NOT include unverified\n  credential claims in the \"presented_credential_sets\" object.  The OP\n  MAY proceed without those credentials or fail the authentication.\n```\n**draft-svensson-credential-oidc-bridge.md:1411**\n* \"presented_credential_sets\" is a claim whose value is an array; referring to it as an \"object\" is inaccurate here.\n```\nThe OP MUST NOT allow external parties to inject or modify claims\nwithin the \"presented_credential_sets\" object.  The OP MUST populate this\nclaim exclusively from verified credential presentations.  The ID\nToken MUST be signed by the OP to protect integrity.\n```\n\n- **Files reviewed:** 1/1 changed files\n- **Comments generated:** 5\n- **Review effort level:** Lite\n</details>\n\n---\n\n\ud83d\udca1 <a href=\"/masv3971/rfc_credential_oidc_bridge/new/main?filename=.github/skills/code-review/SKILL.md\" class=\"Link--inTextBlock\" target=\"_blank\" rel=\"noopener noreferrer\">Add a `code-review` agent skill</a> or configure MCP servers for context-aware, tailored reviews. <a href=\"https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review#mcp-servers-and-agent-skills\" class=\"Link--inTextBlock\" target=\"_blank\" rel=\"noopener noreferrer\">Learn more in the docs.</a>",
+          "createdAt": "2026-08-26T09:53:10Z",
+          "updatedAt": "2026-08-26T09:53:11Z",
+          "comments": [
+            {
+              "originalPosition": 30,
+              "body": "The term definition says a Credential Set has \"two members\", but later the spec explicitly allows additional members within a Credential Set. Reword this definition to describe the two defined members without implying these are the only possible members.",
+              "createdAt": "2026-08-26T09:53:10Z",
+              "updatedAt": "2026-08-26T09:53:11Z"
+            },
+            {
+              "originalPosition": 286,
+              "body": "The Credential Entry section states the entry MUST contain \"claims\", but the new \"namespaces\" member requires omitting \"claims\" when present (mdoc multi-namespace). This is internally inconsistent and needs the required-member rules updated (e.g., require either \"claims\" or \"namespaces\").",
+              "createdAt": "2026-08-26T09:53:10Z",
+              "updatedAt": "2026-08-26T09:53:11Z"
+            },
+            {
+              "originalPosition": 414,
+              "body": "This paragraph is self-contradictory: it says an OP that supports DCQL-based mode MUST include \"dcql_query_supported\": true, but then says the member is OPTIONAL and absence must be treated as false. Remove the OPTIONAL/absence sentence (or relax the MUST) so discovery behavior is unambiguous.",
+              "createdAt": "2026-08-26T09:53:10Z",
+              "updatedAt": "2026-08-26T09:53:11Z"
+            },
+            {
+              "originalPosition": 386,
+              "body": "The discovery metadata now defines the \"type\" member as an array of strings, but the non-normative discovery examples in this section and in Appendix {#app-dcql-binding} still show \"type\" as a single string (and the appendix text describes treating it as a string). Update the examples and appendix text to match the new array shape (and clarify how to derive meta.vct_values / meta.doctype_value from the array).",
+              "createdAt": "2026-08-26T09:53:11Z",
+              "updatedAt": "2026-08-26T09:53:11Z"
+            },
+            {
+              "originalPosition": 427,
+              "body": "\"presented_credential_sets\" is defined as a top-level JSON array; calling it an \"object\" here is inaccurate and can confuse implementers.\n\nThis issue also appears in the following locations of the same file:\n- line 1251\n- line 1281\n- line 1408",
+              "createdAt": "2026-08-26T09:53:11Z",
+              "updatedAt": "2026-08-26T09:53:11Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABK8--UA",
+          "commit": {
+            "abbreviatedOid": "23b9f2c"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udfe1 Changes recommended\n\nThe updated Credential Entry section contains a normative consistency issue about required members (\u201cclaims\u201d vs \u201cclaims or namespaces\u201d) that needs to be resolved before merging.\n\n*Once you've addressed the issues Copilot identified, you can request another Copilot review.*\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (1)\n\n**draft-svensson-credential-oidc-bridge.md:775**\n* This section defines \"claims\" as a required member (it appears under \u201cIt MUST contain the following members\u201d), but then states that a Credential Entry MUST contain exactly one of \"claims\" or \"namespaces\". Additionally, \"namespaces\" is introduced later under \u201cIt MAY contain the following additional members\u201d, which conflicts with it being an alternative required member. Please restructure this part so the required-members list and the normative MUST/ MUST NOT rules are consistent (e.g., make \u201cclaims OR namespaces\u201d the required element and place both definitions accordingly).\n```\nclaims\n: A JSON object {{RFC8259}} containing the disclosed claims from\n  the credential.  Each key is a claim name and each value is the\n  claim value.  Claim names are determined by the credential type\n  and MUST be strings.  Claim values MAY be any valid JSON type.\n  A Credential Entry MUST contain exactly one of \"claims\" or\n  \"namespaces\" (the latter is defined below); Credential Entries\n  for credential formats without namespaces always use \"claims\".\n```\n\n- **Files reviewed:** 1/1 changed files\n- **Comments generated:** 1\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-26T11:49:01Z",
+          "updatedAt": "2026-08-26T11:49:01Z",
+          "comments": [
+            {
+              "originalPosition": 60,
+              "body": "The DCQL-based response text still says the returned Credential Set object\u2019s \u201cmembers are the Credential Queries\u201d, but the updated structure defines Credential Queries as entries inside the required \"credentials\" member (see presented_credential_sets array definition). This sentence should be updated to avoid implying that Credential Query IDs appear as top-level members of the Credential Set object.",
+              "createdAt": "2026-08-26T11:49:01Z",
+              "updatedAt": "2026-08-26T11:49:01Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABK9Kfrw",
+          "commit": {
+            "abbreviatedOid": "d8b2832"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udd35 Needs a closer look\n\nThere is an internal spec inconsistency around required Credential Entry members (\u201cclaims\u201d vs \u201cnamespaces\u201d) that needs to be resolved to avoid ambiguous conformance requirements.\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (2)\n\n**Previously missed (2)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.md:776**\n* The Credential Entry section says the entry \"MUST contain the following members:\" and then lists \"claims\" as a required member, but the added constraint later says a Credential Entry MUST contain exactly one of \"claims\" or \"namespaces\". This is internally inconsistent and makes it unclear whether \"claims\" is always required or can be replaced by \"namespaces\" for namespaced formats (e.g., ISO mdoc). Please restructure this part so the required-member text explicitly requires \"type\" plus exactly one of \"claims\"/\"namespaces\", and ensure the definition list matches that requirement.\n```\n  claim value.  Claim names are determined by the credential type\n  and MUST be strings.  Claim values MAY be any valid JSON type.\n  A Credential Entry MUST contain exactly one of \"claims\" or\n  \"namespaces\" (the latter is defined below); Credential Entries\n  for credential formats without namespaces always use \"claims\".\n```\n**draft-svensson-credential-oidc-bridge.md:825**\n* The \"verification\" object is now OPTIONAL with omission equivalent to trust_status=\"not_checked\", but the \"trust_status\" subfield description still says the OP MUST set the member to \"not_checked\" rather than omitting it. With an optional \"verification\" object, that wording becomes contradictory; it should be conditional on the object being present (and rely on the earlier equivalence rule when it is absent).\n```\nverification\n: OPTIONAL JSON object providing metadata about the verification\n  the OP performed on the credential.  Omission of the\n  \"verification\" object is semantically equivalent to a\n  \"verification\" object containing only `\"trust_status\":\n```\n\n- **Files reviewed:** 1/1 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-26T12:12:12Z",
+          "updatedAt": "2026-08-26T12:12:12Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABK9WYmA",
+          "commit": {
+            "abbreviatedOid": "88886f0"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udfe1 Changes recommended\n\nThe updated spec text contains internal ambiguities/contradictions (notably around reserved key space and where optional Credential Entry members live) that could lead to divergent implementations.\n\n*Once you've addressed the issues Copilot identified, you can request another Copilot review.*\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (1)\n\n**Previously missed (1)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.md:732**\n* The statement that no key inside the \"credentials\" object is reserved contradicts the later rule reserving the `bridge:` prefix for OP-augmented DCQL Credential Query \"id\" values. This should be clarified here so implementers don't assume any string is acceptable for RP-supplied query ids.\n```\nWithin the \"credentials\" object each key MUST be unique.  No key\ninside \"credentials\" is reserved; scope values and DCQL\nCredential Query identifiers are free to use any string.\n```\n\n- **Files reviewed:** 1/1 changed files\n- **Comments generated:** 1\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-26T12:32:08Z",
+          "updatedAt": "2026-08-26T12:32:08Z",
+          "comments": [
+            {
+              "originalPosition": 393,
+              "body": "\"It\" is ambiguous here (it can read as referring to the immediately preceding \"verification\" object rather than the Credential Entry object), which makes it unclear whether members like \"issuer\"/\"valid_until\"/\"primary\" belong at the Credential Entry root (as in the example) or inside \"verification\". Clarify the subject explicitly.",
+              "createdAt": "2026-08-26T12:32:08Z",
+              "updatedAt": "2026-08-26T12:32:08Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABK9Zs2A",
+          "commit": {
+            "abbreviatedOid": "8d538b3"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udd35 Needs a closer look\n\nThe updated spec text introduces a concrete security flaw in the sub-derivation example (HMAC keyed by client_id) and contains a few normative wording issues that could mislead implementers.\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (5)\n\n**Previously missed (3)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.md:780**\n* In the definition of the \"claims\" member, the sentence fragment \"MUST NOT be present\u2026\" is missing a subject, which makes the normative requirement ambiguous/ungrammatical.\n\nThis issue also appears in the following locations of the same file:\n- line 791\n- line 800\n```\n  MUST NOT be present when \"namespaces\" is present.\n```\n**draft-svensson-credential-oidc-bridge.md:1242**\n* The example transformation for pairwise subject identifiers suggests using an HMAC \"keyed on the client_id\". Since client_id is not a secret, using it as an HMAC key does not provide the intended pseudonymization; the key material should be a deployment secret and the client_id should be incorporated as input/context.\n```\ndeployment-configured transformation (for example, an HMAC keyed\non the \"client_id\").  The OP MUST NOT surface a raw credential\n```\n**draft-svensson-credential-oidc-bridge.md:1447**\n* This text normatively specifies an exact OAuth/OIDC error_description value (\"trusted_authority_not_allowed\"). In OAuth 2.0/OIDC, error_description is intended to be human-readable and not reliably machine-parsed; if you need a machine-actionable signal, keep it as guidance (e.g., \"include the string \u2026\") and/or use error_uri to point to a defined condition.\n```\n   return an OIDC error response with error code\n   \"invalid_request\" and error description\n   \"trusted_authority_not_allowed\" so that the RP can distinguish\n   an allowlist rejection from an unsatisfied query.\n```\n\n**draft-svensson-credential-oidc-bridge.md:793**\n* In the \"namespaces\" member definition, the requirement text starts with \"MUST NOT\u2026\" without a subject, which reads like a sentence fragment and can be misread. Make it explicit that the requirement applies to the \"namespaces\" member.\n```\n  originating namespace.  MUST NOT co-exist with \"claims\" at the\n  Credential Entry root, and MUST NOT be present for credential\n  formats that do not use namespaces.\n```\n**draft-svensson-credential-oidc-bridge.md:800**\n* The \"verification\" object is described as something that \"MAY contain\" the listed members, but immediately below requires that it include \"trust_status\". Rewording this line avoids an apparent contradiction for implementers.\n```\n  This object MAY contain the following members:\n```\n\n- **Files reviewed:** 1/1 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-26T12:38:11Z",
+          "updatedAt": "2026-08-26T12:38:11Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABK9jrsg",
+          "commit": {
+            "abbreviatedOid": "9dfc9d8"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udd35 Needs a closer look\n\nThe spec text introduces a contradiction about whether keys inside the `credentials` object are reserved, conflicting with the later `bridge:` reservation rule.\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (1)\n\n**Previously missed (1)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.md:732**\n* The text says no key inside the \"credentials\" object is reserved and that query identifiers are free to use any string, but later the spec reserves the `bridge:` prefix for OP-augmented DCQL Credential Query \"id\" values and requires rejecting RP-supplied ids that start with `bridge:`. This section should reflect that reservation to avoid implementer confusion and accidental collisions.\n```\nWithin the \"credentials\" object each key MUST be unique.  No key\ninside \"credentials\" is reserved; scope values and DCQL\nCredential Query identifiers are free to use any string.\n```\n\n- **Files reviewed:** 1/1 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-26T12:54:30Z",
+          "updatedAt": "2026-08-26T12:54:30Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABK923cQ",
+          "commit": {
+            "abbreviatedOid": "3e50801"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udd35 Needs a closer look\n\nThe updated draft introduces multiple discretionary hyphenations across line breaks (e.g., `protocol-`/`agnostic`) that will render incorrectly in Markdown output and should be corrected.\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (4)\n\n**Previously missed (1)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.md:273**\n* The word \"claim-level\" is split across a line break (\"claim-\" + \"level\"), which will render as \"claim- level\" in Markdown output; avoid discretionary hyphenation in prose.\n\nThis issue also appears in the following locations of the same file:\n- line 796\n- line 905\n- line 1493\n```\n*  The DCQL \"claim_sets\" member MAY be used to express claim-\n   level alternation within a single Credential Query (for\n```\n\n**draft-svensson-credential-oidc-bridge.md:906**\n* \"issuer-\" + \"signed\" is split across a line break, which will render as \"issuer- signed\" in Markdown output; keep the hyphenated term intact.\n```\n  credentials it is the compact serialization of the issuer-\n  signed JWT concatenated with all disclosed disclosures\n```\n**draft-svensson-credential-oidc-bridge.md:797**\n* \"co-\" + \"exist\" is split across a line break, which will render as \"co- exist\" in Markdown output; write the word without splitting it.\n```\n  originating namespace.  The \"namespaces\" member MUST NOT co-\n  exist with \"claims\" at the Credential Entry root.  The\n```\n**draft-svensson-credential-oidc-bridge.md:1494**\n* \"protocol-\" + \"agnostic\" is split across a line break, which will render as \"protocol- agnostic\" in Markdown output; avoid splitting hyphenated terms across lines.\n```\nThe claim name \"presented_credential_sets\" was chosen to be protocol-\nagnostic, clearly describing the content (credentials that were\n```\n\n- **Files reviewed:** 1/1 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-26T13:24:33Z",
+          "updatedAt": "2026-08-26T13:24:34Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABK99FcQ",
+          "commit": {
+            "abbreviatedOid": "8765add"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udfe1 Changes recommended\n\nThe draft references RFC 7515 but does not consistently include it as a proper citation/normative reference, which can break generated References completeness.\n\n*Once you've addressed the issues Copilot identified, you can request another Copilot review.*\n\n<details>\n<summary>Review details</summary>\n\n- **Files reviewed:** 2/3 changed files\n- **Comments generated:** 2\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-26T13:33:29Z",
+          "updatedAt": "2026-08-26T13:33:30Z",
+          "comments": [
+            {
+              "originalPosition": 1639,
+              "body": "RFC 7515 is referenced earlier (re: the JWS \"crit\" header parameter), but it is missing from the Normative References list. Add an [RFC7515] entry to keep references complete.",
+              "createdAt": "2026-08-26T13:33:29Z",
+              "updatedAt": "2026-08-26T13:33:30Z"
+            },
+            {
+              "originalPosition": 403,
+              "body": "This section builds on the JWS \"crit\" header semantics but the document currently mentions RFC 7515 without a proper kramdown-rfc citation, so it may not appear in the generated References. Consider adding an explicit {{RFC7515}} citation to ensure the reference is included.",
+              "createdAt": "2026-08-26T13:33:30Z",
+              "updatedAt": "2026-08-26T13:33:30Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABK-E1ZQ",
+          "commit": {
+            "abbreviatedOid": "99e3770"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udd35 Needs a closer look\n\nThe committed text draft still contains at least one publishability-blocking placeholder (\u201cTBD\u201d in the header) and a small editorial correction was found.\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (2)\n\n**Previously missed (2)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.txt:1845**\n* The Acknowledgments section refers to a single author, but this draft lists multiple authors. Update the text to use the plural form.\n```\n   The author would like to thank Patrick Amrein (Ubique) for reviews,\n```\n**draft-svensson-credential-oidc-bridge.txt:5**\n* The text output header still contains the placeholder \"TBD\" (typically the working group/stream line). If this .txt is meant to be publishable output, set the correct value in the source metadata and regenerate so the header is not left as a placeholder.\n```\nTBD                                                          M. Svensson\n```\n\n- **Files reviewed:** 2/3 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-26T13:44:47Z",
+          "updatedAt": "2026-08-26T13:44:47Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABK-KlIg",
+          "commit": {
+            "abbreviatedOid": "53330f5"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udd35 Needs a closer look\n\nThe draft text contains an internal spec inconsistency about what can be marked `required` (Credential Query vs. Credential Set), which needs correction for implementer clarity.\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (2)\n\n**Previously missed (2)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.txt:1802**\n* This paragraph says a Credential Query can be marked with \"required\": true, but in DCQL the `required` boolean applies to `credential_sets` entries (Credential Sets), not to individual Credential Queries. This is inconsistent with the earlier definition of `credential_sets` and may mislead implementers about the failure condition.\n```\n   leaves a Credential Query marked \"required\": true in the enclosing\n   \"credential_sets\" option unsatisfied, and no other Credential Query\n   satisfies the option, the OP MUST return an OIDC error response with\n```\n**draft-svensson-credential-oidc-bridge.md:1747**\n* The text refers to a Credential Query being marked with `\"required\": true`, but `required` is defined for entries in the DCQL `credential_sets` array (i.e., Credential Sets), not for individual Credential Queries. This reads as a spec inconsistency and could confuse implementers about when to return `access_denied`.\n```\nQuery.  If that leaves a Credential Query marked `\"required\":\ntrue` in the enclosing \"credential_sets\" option unsatisfied, and\nno other Credential Query satisfies the option, the OP MUST\n```\n\n- **Files reviewed:** 2/3 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-26T13:53:47Z",
+          "updatedAt": "2026-08-26T13:53:47Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABK-Qqew",
+          "commit": {
+            "abbreviatedOid": "9d00d0a"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udfe2 Approval recommended\n\nOnly a minor acknowledgments wording issue was found; the substantive spec updates are internally consistent and compile-time risks are low.\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (1)\n\n**Previously missed (1)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.txt:1844**\n* Acknowledgments uses singular \"The author\" even though the document lists three authors; this should be plural for consistency (and the Markdown source should be updated too, since this .txt is likely generated).\n```\n   The author would like to thank Patrick Amrein (Ubique) for reviews,\n```\n\n- **Files reviewed:** 2/3 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-26T14:02:17Z",
+          "updatedAt": "2026-08-26T14:02:17Z",
+          "comments": []
         }
       ]
     }
