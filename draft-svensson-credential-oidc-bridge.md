@@ -33,7 +33,6 @@ author:
     email: joel@siros.org
 
 normative:
-  RFC6749:
   RFC7515:
   RFC7519:
   RFC8126:
@@ -744,14 +743,10 @@ reservation, keys are free to use any string.
 The outer array MUST contain at least one Credential Set.  In most
 deployments a single set is returned; multiple sets are possible
 when the RP requested alternatives via "credential_sets" in the
-DCQL-based mode (see {{requesting-credential-claims}}).  In that
-case the OP MUST return one Credential Set object per satisfied
-DCQL Credential Set entry, in the same order as they appeared in
-the request.  In scope-based mode the OP MUST emit Credential
-Sets in lexicographic ascending order of the credential type
-scope value used as the "credentials" object key, so that the
-ordering is deterministic even though OAuth 2.0 scope values are
-unordered per Section 3.3 of {{RFC6749}}.
+DCQL-based mode (see {{requesting-credential-claims}}).  The order
+of Credential Set objects in the outer array is not significant;
+RPs MUST identify sets by "credential_set_id" or by iterating over
+the array rather than relying on positional order.
 
 Additional members within a Credential Set MAY be present.
 Implementations that do not recognise additional members MUST
@@ -1261,15 +1256,9 @@ The identity credential is selected in this order:
     credential.  At most one such entry is permitted per
     Credential Set.
 
-2.  Otherwise, if the first Credential Set in
-    "presented_credential_sets" contains exactly one Credential
-    Entry, that entry is the identity credential.  "First" is
-    defined by the ordering rules in
-    {{presented-credential-sets-array}}: for DCQL-based mode it
-    is the order in which Credential Set entries appeared in the
-    request; for scope-based mode it is lexicographic ascending
-    by the credential type scope value used as the "credentials"
-    object key.
+2.  Otherwise, if the "presented_credential_sets" response
+    contains exactly one Credential Entry in total (across all
+    Credential Sets), that entry is the identity credential.
 
 3.  Otherwise, the selection is implementation-defined and MUST
     be documented by the OP.
