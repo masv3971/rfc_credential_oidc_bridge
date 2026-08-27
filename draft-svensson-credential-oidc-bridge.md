@@ -290,7 +290,10 @@ This profile applies the following additional restrictions:
    (per Section 6 of {{OpenID4VP}}) with the sole exception of
    the reserved prefix defined in {{app-dcql-binding}}, and are
    used only as response keys and as references from
-   "credential_sets".
+   "credential_sets".  If any RP-supplied "id" does not conform
+   to the character set required by Section 6.1 of {{OpenID4VP}},
+   the OP MUST reject the authorization request with OIDC error
+   code "invalid_request".
 
 *  When "claims" is omitted, the OP applies the pre-registered
    claim set of the matched entry.
@@ -1755,7 +1758,11 @@ sent to the wallet, subject to the following:
    string `bridge_` concatenated with the scope value (for
    example, the augmented query for scope "ehic" has
    `"id": "bridge_ehic"`).  The resulting "id" MUST conform to
-   the character set required by Section 6.1 of {{OpenID4VP}}.
+   the character set required by Section 6.1 of {{OpenID4VP}};
+   if the scope value would produce a non-conforming "id", the
+   OP MUST reject the authorization request with OIDC error
+   code "invalid_request" instead of emitting a malformed
+   augmented query.
 *  Reservation: the RP MUST NOT use a Credential Query "id" that
    begins with `bridge_`.  If any RP-supplied "id" begins with
    `bridge_`, the OP MUST reject the request with OIDC error
