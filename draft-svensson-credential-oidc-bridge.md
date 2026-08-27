@@ -751,8 +751,19 @@ ignore them.
 
 Each Credential Entry object represents a single credential
 presented during the presentation flow.  It MUST contain the
-"type" and "verification" members and exactly one of the
-"claims" or "namespaces" members, all defined below.  The choice
+"type" member and exactly one of the "claims" or "namespaces"
+members, all defined below.  It MAY additionally contain a
+"verification" member (see below).  The "verification" member
+MAY be omitted only when no other rule in this specification
+requires the OP to convey specific verification metadata for
+the credential (for example, the "valid_until" bullet below
+requires "verification.trust_status" to be set to "expired" for
+credentials whose validity period has passed, so a Credential
+Entry carrying such a credential MUST include a "verification"
+object).  When the "verification" member is omitted, the RP
+MUST treat the entry as if the OP had included a "verification"
+object containing only `"trust_status": "not_checked"` (see
+{{trust-status-registry}}) and no other members.  The choice
 between "claims" and "namespaces" depends on the credential
 format: formats without namespaces use "claims"; credential
 formats that need to preserve the mapping of claims to their
@@ -798,12 +809,18 @@ namespaces
   "namespaces" member MUST NOT be present for credential formats
   that do not use namespaces.
 
+The Credential Entry MAY additionally contain the following
+members at its root:
+
 verification
-: REQUIRED JSON object providing metadata about the verification
-  the OP performed on the credential.  The object MUST contain
-  the "trust_status" member defined below; other members MAY be
-  omitted when the corresponding information is unavailable.
-  Each member's requirement level is stated in its description:
+: OPTIONAL JSON object providing metadata about the verification
+  the OP performed on the credential.  When present, it MUST
+  contain the "trust_status" member defined below; other members
+  MAY be omitted when the corresponding information is
+  unavailable.  See the introductory paragraph of this section
+  for the semantics of an omitted "verification" member.  Each
+  member's requirement level within the object is stated in its
+  description:
 
   holder_binding
   : A string describing the mechanism used to verify that the
@@ -815,11 +832,14 @@ verification
   : REQUIRED string describing the OP's assessment of the
     credential's trust status at the time of verification.
     Values are taken from the "Credential Trust Status Values"
-    registry defined in {{trust-status-registry}}.  If the OP
-    did not perform a trust-status check, it MUST set the value
-    to "not_checked".  If a check was performed but the
-    authoritative source returned no conclusive answer, the OP
-    MUST set the value to "unknown".
+    registry defined in {{trust-status-registry}}.  When the
+    enclosing "verification" object is present but the OP did
+    not perform a trust-status check, "trust_status" MUST be set
+    to "not_checked"; an OP that has no verification metadata to
+    convey MAY instead omit the entire "verification" object per
+    the introductory paragraph of this section.  When a check
+    was performed but the authoritative source returned no
+    conclusive answer, "trust_status" MUST be set to "unknown".
 
   protected_headers
   : A JSON object echoing selected verified protected-header
@@ -855,9 +875,6 @@ verification
   Additional members within the "verification" object MAY be
   present.  Unless listed in "crit", implementations that do not
   recognise additional members MUST ignore them.
-
-The Credential Entry MAY additionally contain the following
-members at its root:
 
 issuer
 : A string identifying the entity that issued the credential.  For
