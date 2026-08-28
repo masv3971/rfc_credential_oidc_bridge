@@ -727,19 +727,23 @@ The array contains one or more Credential Set objects.  Each
 Credential Set is a JSON object with the following members:
 
 credential_set_id
-: Conditionally REQUIRED string.  When the response contains more
-  than one Credential Set object this member MUST be present on
-  every Credential Set in the response and the values MUST be
-  unique within the response.  When the response contains exactly
-  one Credential Set object this member is OPTIONAL.  When the RP
-  used the DCQL-based mode ({{dcql-based-requests}}), the value
-  MUST equal the "id" of the RP-supplied "credential_sets" entry
-  that this Credential Set satisfies.  The value is chosen by the
-  RP and treated as opaque by the OP; for example, an RP that
-  asked for "PID or EHIC" via a "credential_sets" entry with
-  `"id": "pid_or_ehic"` receives the string "pid_or_ehic" back as
-  "credential_set_id" on the corresponding Credential Set in the
-  response.
+: Conditionally REQUIRED string.  When the RP used the DCQL-based
+  mode ({{dcql-based-requests}}) and its authorization request
+  included a "credential_sets" member, this member MUST be present
+  on every Credential Set in the response (including when exactly
+  one Credential Set is returned), and its value MUST equal the
+  "id" of the RP-supplied "credential_sets" entry that this
+  Credential Set satisfies.  When more than one Credential Set is
+  returned, the values MUST also be unique within the response.
+  When the RP did not supply "credential_sets" (scope-based mode,
+  or DCQL-based mode without a "credential_sets" member) this
+  member is OPTIONAL; if present when more than one Credential
+  Set is returned, the values MUST be unique within the response.
+  The value is chosen by the RP and treated as opaque by the OP;
+  for example, an RP that asked for "PID or EHIC" via a
+  "credential_sets" entry with `"id": "pid_or_ehic"` receives the
+  string "pid_or_ehic" back as "credential_set_id" on the
+  corresponding Credential Set in the response.
 
 credentials
 : REQUIRED JSON object.  Each key is either a credential type
@@ -763,12 +767,15 @@ deployments a single set is returned; multiple sets are possible
 when the RP requested alternatives via "credential_sets" in the
 DCQL-based mode (see {{requesting-credential-claims}}).  The order
 of Credential Set objects in the outer array is not significant.
-When more than one Credential Set is returned, each set MUST carry
-a unique "credential_set_id" echoing the "id" of the corresponding
-entry in the RP's DCQL "credential_sets" array (see
-{{dcql-based-requests}}), and RPs MUST use "credential_set_id" to
-correlate response Credential Sets back to their requested
-alternatives.
+When the RP's authorization request used the DCQL-based mode with
+a "credential_sets" member, every Credential Set in the response
+MUST carry a "credential_set_id" echoing the "id" of the
+corresponding entry in the RP's DCQL "credential_sets" array (see
+{{dcql-based-requests}}), including the case where exactly one
+Credential Set is returned; when more than one Credential Set is
+returned, the values MUST also be unique within the response.
+RPs MUST use "credential_set_id" to correlate response Credential
+Sets back to their requested alternatives.
 
 Additional members within a Credential Set MAY be present.
 Implementations that do not recognise additional members MUST
