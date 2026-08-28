@@ -310,13 +310,14 @@ This profile applies the following additional restrictions:
 The "credential_sets" member expresses combinatorial logic over
 Credential Queries as defined in Section 6.3 of {{OpenID4VP}}.
 Each Credential Set entry contains an "options" array listing
-alternative AND-groups of Credential Query "id"s, plus an OPTIONAL
-"id" and OPTIONAL "required" boolean (default `true`).  In this
-profile the "id" of each Credential Set entry is REQUIRED, so that
-the OP can unambiguously correlate response Credential Sets back
-to the requested alternatives; the OP MUST reject a request in
-which any "credential_sets" entry lacks an "id" with OIDC error
-code "invalid_request".  If "credential_sets" is present, the OP
+alternative AND-groups of Credential Query "id"s, together with an
+"id" and a "required" boolean (default `true`).  Although the "id"
+of a Credential Set entry is OPTIONAL in the base OpenID4VP
+definition, this profile makes it REQUIRED so that the OP can
+unambiguously correlate response Credential Sets back to the
+requested alternatives; the OP MUST reject a request in which any
+"credential_sets" entry lacks an "id" with OIDC error code
+"invalid_request".  If "credential_sets" is present, the OP
 MUST evaluate the alternation per Section 6.3 of {{OpenID4VP}} and
 return, for each satisfied Credential Set, one Credential Set
 object within the "presented_credential_sets" claim (see
