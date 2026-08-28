@@ -278,7 +278,16 @@ This profile applies the following additional restrictions:
    disclosed claims satisfy at least one of the listed claim-set
    options, per Section 6.4.2 of {{OpenID4VP}}.  A Credential
    Query whose disclosed claims do not satisfy any listed option
-   MUST be treated as not satisfying the query.
+   MUST be treated as not satisfying the query.  When the
+   disclosed claims satisfy more than one listed option (for
+   example, because the wallet over-discloses relative to the
+   RP's minimum), the OP MUST deterministically select the
+   *matched claim-set option* as the first option, in the array
+   order supplied by the RP, whose listed claims are all present
+   among the disclosed claims.  This selection rule ensures that
+   different OPs filter the same subset of claims for the same
+   presentation and lets the RP express its preferred option by
+   ordering "claim_sets" from most to least preferred.
 
 *  Each Credential Query MUST identify a credential type (via
    "format" and the format-specific type identifier in "meta")
@@ -1207,10 +1216,11 @@ Response construction rules:
    capabilities.
 *  When "claim_sets" is present on a Credential Query, the OP MUST
    include in the corresponding Credential Entry only the claims
-   listed in the matched claim-set option, even if the wallet
-   disclosed additional claims covered by other options.  This
-   preserves data minimization when the wallet over-discloses
-   relative to the option that satisfied the query.
+   listed in the matched claim-set option (selected as defined in
+   {{dcql-based-requests}}), even if the wallet disclosed
+   additional claims covered by other options.  This preserves
+   data minimization when the wallet over-discloses relative to
+   the option that satisfied the query.
 *  When the RP used scope-based mode, or the RP's Credential Query
    omitted "claims", the OP includes the claim set configured for
    that credential type by deployment policy.
