@@ -176,8 +176,9 @@ Wallet
 
 Credential Set
 : A JSON object within the "presented_credential_sets" array
-  carrying an OPTIONAL "credential_set_id" (a string that echoes
-  an RP-supplied DCQL Credential Set id) and a REQUIRED
+  carrying a "credential_set_id" (a string that echoes an
+  RP-supplied DCQL Credential Set id; conditionally required, see
+  {{presented-credential-sets-array}}) and a REQUIRED
   "credentials" (an object mapping each credential type scope
   value or DCQL Credential Query id to an array of Credential
   Entry objects).  Additional members MAY also be present (see
@@ -277,7 +278,16 @@ This profile applies the following additional restrictions:
    disclosed claims satisfy at least one of the listed claim-set
    options, per Section 6.4.2 of {{OpenID4VP}}.  A Credential
    Query whose disclosed claims do not satisfy any listed option
-   MUST be treated as not satisfying the query.
+   MUST be treated as not satisfying the query.  When the
+   disclosed claims satisfy more than one listed option (for
+   example, because the wallet over-discloses relative to the
+   RP's minimum), the OP MUST deterministically select the
+   *matched claim-set option* as the first option, in the array
+   order supplied by the RP, whose listed claims are all present
+   among the disclosed claims.  This selection rule ensures that
+   different OPs filter the same subset of claims for the same
+   presentation and lets the RP express its preferred option by
+   ordering "claim_sets" from most to least preferred.
 
 *  Each Credential Query MUST identify a credential type (via
    "format" and the format-specific type identifier in "meta")
@@ -285,9 +295,14 @@ This profile applies the following additional restrictions:
    whose scope value is present in the authorization request.
    Otherwise the OP MUST return "invalid_request".
 
-*  Credential Query "id" values are opaque to the OP (per
-   Section 6 of {{OpenID4VP}}) and are used only as response
-   keys and as references from "credential_sets".
+*  RP-supplied Credential Query "id" values are opaque to the OP
+   (per Section 6 of {{OpenID4VP}}) with the sole exception of
+   the reserved prefix defined in {{app-dcql-binding}}, and are
+   used only as response keys and as references from
+   "credential_sets".  If any RP-supplied "id" does not conform
+   to the character set required by Section 6.1 of {{OpenID4VP}},
+   the OP MUST reject the authorization request with OIDC error
+   code "invalid_request".
 
 *  When "claims" is omitted, the OP applies the pre-registered
    claim set of the matched entry.
@@ -295,18 +310,23 @@ This profile applies the following additional restrictions:
 The "credential_sets" member expresses combinatorial logic over
 Credential Queries as defined in Section 6.3 of {{OpenID4VP}}.
 Each Credential Set entry contains an "options" array listing
-alternative AND-groups of Credential Query "id"s, plus an OPTIONAL
-"id" and OPTIONAL "required" boolean (default `true`).  If
-"credential_sets" is present, the OP MUST evaluate the alternation
-per Section 6.3 of {{OpenID4VP}} and return, for each satisfied
-Credential Set, one Credential Set object within the
-"presented_credential_sets" claim (see {{presented-credential-sets-array}})
-whose "credentials" member is keyed by the Credential Query "id"
-values of the matched AND-group.  The OPTIONAL "id" of the
-Credential Set entry MAY be echoed by the OP in the response as
-the "credential_set_id" member of the corresponding Credential
-Set (see {{presented-credential-sets-array}}), to help the RP
-identify which alternative was satisfied.
+alternative AND-groups of Credential Query "id"s, together with an
+"id" and a "required" boolean (default `true`).  Although the "id"
+of a Credential Set entry is OPTIONAL in the base OpenID4VP
+definition, this profile makes it REQUIRED so that the OP can
+unambiguously correlate response Credential Sets back to the
+requested alternatives; the OP MUST reject a request in which any
+"credential_sets" entry lacks an "id" with OIDC error code
+"invalid_request".  If "credential_sets" is present, the OP
+MUST evaluate the alternation per Section 6.3 of {{OpenID4VP}} and
+return, for each satisfied Credential Set, one Credential Set
+object within the "presented_credential_sets" claim (see
+{{presented-credential-sets-array}}) whose "credentials" member
+is keyed by the Credential Query "id" values of the matched
+AND-group.  The OP MUST echo the "id" of the Credential Set entry
+as the "credential_set_id" member of the corresponding response
+Credential Set (see {{presented-credential-sets-array}}), so that
+the RP can identify which alternative was satisfied.
 
 If "credential_sets" is absent, the OP treats all Credential
 Queries as required, matching the DCQL default behaviour.
@@ -657,7 +677,7 @@ containing two credentials:
             "issuer": "https://svs.example.se",
             "valid_from": 1709251200,
             "valid_until": 1740787200,
-            "verified_at": 1722772700,
+            "verified_at": 1722772800,
             "verification": {
               "trust_status": "not_checked",
               "holder_binding": "key_binding"
@@ -675,7 +695,7 @@ containing two credentials:
             "issuer": "https://tax.example.se",
             "valid_from": 1709251200,
             "valid_until": 1740787200,
-            "verified_at": 1722772700,
+            "verified_at": 1722772800,
             "verification": {
               "trust_status": "not_checked",
               "holder_binding": "key_binding"
@@ -708,14 +728,22 @@ The array contains one or more Credential Set objects.  Each
 Credential Set is a JSON object with the following members:
 
 credential_set_id
-: OPTIONAL string.  When the RP used the DCQL-based mode
-  ({{dcql-based-requests}}) and supplied a "credential_sets" entry
-  with an "id", the OP MAY echo that "id" here to allow the RP to
-  identify which entry in its "credential_sets" array was
-  satisfied.  The value is chosen by the RP and treated as opaque
-  by the OP; for example, an RP that asked for "PID or EHIC" via
-  a "credential_sets" entry with `"id": "pid_or_ehic"` receives
-  the string "pid_or_ehic" back as "credential_set_id" on the
+: Conditionally REQUIRED string.  When the RP used the DCQL-based
+  mode ({{dcql-based-requests}}) and its authorization request
+  included a "credential_sets" member, this member MUST be present
+  on every Credential Set in the response (including when exactly
+  one Credential Set is returned), and its value MUST equal the
+  "id" of the RP-supplied "credential_sets" entry that this
+  Credential Set satisfies.  When more than one Credential Set is
+  returned, the values MUST also be unique within the response.
+  When the RP did not supply "credential_sets" (scope-based mode,
+  or DCQL-based mode without a "credential_sets" member) this
+  member is OPTIONAL; if present when more than one Credential
+  Set is returned, the values MUST be unique within the response.
+  The value is chosen by the RP and treated as opaque by the OP;
+  for example, an RP that asked for "PID or EHIC" via a
+  "credential_sets" entry with `"id": "pid_or_ehic"` receives the
+  string "pid_or_ehic" back as "credential_set_id" on the
   corresponding Credential Set in the response.
 
 credentials
@@ -729,7 +757,7 @@ credentials
 
 Within the "credentials" object each key MUST be unique.  Keys
 are scope values (in scope-based mode) or DCQL Credential Query
-"id" values (in DCQL-based mode).  The `bridge:` prefix on
+"id" values (in DCQL-based mode).  The `bridge_` prefix on
 Credential Query "id" values is reserved for the OP-augmented
 queries defined in {{app-dcql-binding}}, and RPs MUST NOT use it
 as a scope value or as a Credential Query "id"; other than that
@@ -738,10 +766,17 @@ reservation, keys are free to use any string.
 The outer array MUST contain at least one Credential Set.  In most
 deployments a single set is returned; multiple sets are possible
 when the RP requested alternatives via "credential_sets" in the
-DCQL-based mode (see {{requesting-credential-claims}}).  In that
-case the OP MUST return one Credential Set object per satisfied
-DCQL Credential Set entry, in the same order as they appeared in
-the request.
+DCQL-based mode (see {{requesting-credential-claims}}).  The order
+of Credential Set objects in the outer array is not significant.
+When the RP's authorization request used the DCQL-based mode with
+a "credential_sets" member, every Credential Set in the response
+MUST carry a "credential_set_id" echoing the "id" of the
+corresponding entry in the RP's DCQL "credential_sets" array (see
+{{dcql-based-requests}}), including the case where exactly one
+Credential Set is returned; when more than one Credential Set is
+returned, the values MUST also be unique within the response.
+RPs MUST use "credential_set_id" to correlate response Credential
+Sets back to their requested alternatives.
 
 Additional members within a Credential Set MAY be present.
 Implementations that do not recognise additional members MUST
@@ -1187,6 +1222,13 @@ Response construction rules:
    to the RP.  This ensures data minimization regardless of the
    underlying credential format's selective disclosure
    capabilities.
+*  When "claim_sets" is present on a Credential Query, the OP MUST
+   include in the corresponding Credential Entry only the claims
+   listed in the matched claim-set option (selected as defined in
+   {{dcql-based-requests}}), even if the wallet disclosed
+   additional claims covered by other options.  This preserves
+   data minimization when the wallet over-discloses relative to
+   the option that satisfied the query.
 *  When the RP used scope-based mode, or the RP's Credential Query
    omitted "claims", the OP includes the claim set configured for
    that credential type by deployment policy.
@@ -1245,9 +1287,9 @@ The identity credential is selected in this order:
     credential.  At most one such entry is permitted per
     Credential Set.
 
-2.  Otherwise, if the first Credential Set in
-    "presented_credential_sets" contains exactly one Credential
-    Entry, that entry is the identity credential.
+2.  Otherwise, if the "presented_credential_sets" response
+    contains exactly one Credential Entry in total (across all
+    Credential Sets), that entry is the identity credential.
 
 3.  Otherwise, the selection is implementation-defined and MUST
     be documented by the OP.
@@ -1292,6 +1334,21 @@ Implementations SHOULD consider the following mitigations:
 
 *  Use token introspection or reference tokens where supported by the
    deployment.
+
+## Top-Level Array Claim Compatibility
+
+The "presented_credential_sets" claim is a top-level JSON array
+value.  JWT {{RFC7519}} permits any JSON value as a claim value,
+but a number of claim-mapping components in common deployments
+assume top-level claims are strings, numbers, booleans, or JSON
+objects.  Examples include the Nginx `auth_jwt` module, Keycloak
+protocol mappers, and various JWT-consuming API gateways and
+identity brokers.  Integrators SHOULD verify that any component
+between the OP and the RP application preserves the array shape
+of "presented_credential_sets", and SHOULD consider delivery via
+the UserInfo endpoint (which returns a JSON object with the array
+as one member) when an intermediary cannot pass array-valued JWT
+claims through unchanged.
 
 ## Error Handling
 
@@ -1718,12 +1775,17 @@ sent to the wallet, subject to the following:
    rules of {{app-dcql-binding}} above.  Covered scopes MUST NOT
    be augmented.
 *  Naming: every OP-augmented Credential Query "id" MUST be the
-   string `bridge:` concatenated with the scope value (for
+   string `bridge_` concatenated with the scope value (for
    example, the augmented query for scope "ehic" has
-   `"id": "bridge:ehic"`).
+   `"id": "bridge_ehic"`).  The resulting "id" MUST conform to
+   the character set required by Section 6.1 of {{OpenID4VP}};
+   if the scope value would produce a non-conforming "id", the
+   OP MUST reject the authorization request with OIDC error
+   code "invalid_request" instead of emitting a malformed
+   augmented query.
 *  Reservation: the RP MUST NOT use a Credential Query "id" that
-   begins with `bridge:`.  If any RP-supplied "id" begins with
-   `bridge:`, the OP MUST reject the request with OIDC error
+   begins with `bridge_`.  If any RP-supplied "id" begins with
+   `bridge_`, the OP MUST reject the request with OIDC error
    code "invalid_request".
 *  The OP MUST NOT relax any constraint expressed by the RP
    (e.g., MUST NOT drop "trusted_authorities" or widen "values").
@@ -1739,10 +1801,11 @@ object of the enclosing Credential Set in the
 When the RP's "dcql_query" contains "credential_sets", the OP
 returns one Credential Set object in the "presented_credential_sets"
 array for each satisfied entry in "credential_sets", populated
-with the Credential Entries from the matched AND-group.  The
-OPTIONAL "id" of each Credential Set entry MAY be echoed in the
-response via the "credential_set_id" member described in
-{{presented-credential-sets-array}}.
+with the Credential Entries from the matched AND-group.  The OP
+MUST echo the "id" of each Credential Set entry in the response
+via the "credential_set_id" member described in
+{{presented-credential-sets-array}}, per the profile requirement
+in {{dcql-based-requests}}.
 
 ## Value Constraint Propagation
 
