@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-08-27T06:32:56.936555+00:00",
+  "timestamp": "2026-08-30T02:53:45.039805+00:00",
   "repo": "masv3971/rfc_credential_oidc_bridge",
   "labels": [
     {
@@ -744,6 +744,277 @@
           "body": "### \ud83d\udfe2 Approval recommended\n\nOnly a minor acknowledgments wording issue was found; the substantive spec updates are internally consistent and compile-time risks are low.\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (1)\n\n**Previously missed (1)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.txt:1844**\n* Acknowledgments uses singular \"The author\" even though the document lists three authors; this should be plural for consistency (and the Markdown source should be updated too, since this .txt is likely generated).\n```\n   The author would like to thank Patrick Amrein (Ubique) for reviews,\n```\n\n- **Files reviewed:** 2/3 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
           "createdAt": "2026-08-26T14:02:17Z",
           "updatedAt": "2026-08-26T14:02:17Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "id": "PR_kwDOTuxYJM8AAAABBLv9CA",
+      "title": "Allow omitting verification member.",
+      "url": "https://github.com/masv3971/rfc_credential_oidc_bridge/pull/4",
+      "state": "MERGED",
+      "author": "masv3971",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2026-08-27T09:13:30Z",
+      "updatedAt": "2026-08-27T11:03:32Z",
+      "baseRepository": "masv3971/rfc_credential_oidc_bridge",
+      "baseRefName": "main",
+      "baseRefOid": "9c12fcf23bd13e4df8d78e1c831981e137f93ac0",
+      "headRepository": "masv3971/rfc_credential_oidc_bridge",
+      "headRefName": "masv/fix/verification",
+      "headRefOid": "da0b1936dd200bb3edd57e8fbba613d8a3466d78",
+      "closedAt": "2026-08-27T11:03:28Z",
+      "mergedAt": "2026-08-27T11:03:27Z",
+      "mergedBy": "masv3971",
+      "mergeCommit": {
+        "oid": "78a3208e1699c67ce62bb3bbf1ef43d6dc2399de"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABLFuvAA",
+          "commit": {
+            "abbreviatedOid": "e9dec3f"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udfe1 Changes recommended\n\nThe new \u201cverification is optional\u201d rule conflicts with existing normative text that still requires the OP to set `trust_status` to `not_checked` when no check was performed.\n\n*Once you've addressed the issues Copilot identified, you can request another Copilot review.*\n\n<details>\n<summary>Pull request overview</summary>\n\nUpdates the Credential Entry Object definition to allow omitting the `verification` member, and defines a default interpretation (`trust_status = not_checked`) when it\u2019s absent, so RPs can handle entries consistently even when OPs don\u2019t provide verification metadata.\n\n**Changes:**\n- Make `verification` optional in the Credential Entry Object.\n- Define RP processing semantics for an omitted `verification` member as equivalent to `{ \"trust_status\": \"not_checked\" }`.\n- Reorder/adjust the \u201cadditional root members\u201d text so `verification` is described consistently with the new optionality.\n</details>\n\n<details>\n<summary>File summaries</summary>\n\n| File | Description |\r\n| ---- | ----------- |\r\n| draft-svensson-credential-oidc-bridge.txt | Updates the plain-text spec language to make `verification` optional and define default handling when omitted. |\r\n| draft-svensson-credential-oidc-bridge.md | Mirrors the same normative changes in the Markdown source, including the registry reference anchor. |\n</details>\n\n<details>\n<summary>Review details</summary>\n\n- **Files reviewed:** 2/2 changed files\n- **Comments generated:** 2\n- **Review effort level:** Lite\n</details>\n\n---\n\n\ud83d\udca1 <a href=\"/masv3971/rfc_credential_oidc_bridge/new/main?filename=.github/skills/code-review/SKILL.md\" class=\"Link--inTextBlock\" target=\"_blank\" rel=\"noopener noreferrer\">Add a `code-review` agent skill</a> or configure MCP servers for context-aware, tailored reviews. <a href=\"https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review#mcp-servers-and-agent-skills\" class=\"Link--inTextBlock\" target=\"_blank\" rel=\"noopener noreferrer\">Learn more in the docs.</a>",
+          "createdAt": "2026-08-27T09:18:28Z",
+          "updatedAt": "2026-08-27T09:18:29Z",
+          "comments": [
+            {
+              "originalPosition": 42,
+              "body": "The \"verification\" member is now OPTIONAL with defined semantics for omission (treat as trust_status = not_checked), but the trust_status definition below still says the OP MUST set the value to \"not_checked\" when no trust-status check was performed. That contradicts the allowed omission (there may be no value to set). Update the wording to allow omitting \"verification\" OR setting trust_status explicitly when \"verification\" is present.",
+              "createdAt": "2026-08-27T09:18:29Z",
+              "updatedAt": "2026-08-27T09:18:29Z"
+            },
+            {
+              "originalPosition": 41,
+              "body": "The \"verification\" member is now OPTIONAL with defined semantics for omission (treat as trust_status = not_checked), but the trust_status definition below still says the OP MUST set the value to \"not_checked\" when no trust-status check was performed. That contradicts the allowed omission (there may be no value to set). Update the wording to allow omitting \"verification\" OR setting trust_status explicitly when \"verification\" is present.",
+              "createdAt": "2026-08-27T09:18:29Z",
+              "updatedAt": "2026-08-27T09:18:29Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABLFzivw",
+          "commit": {
+            "abbreviatedOid": "0d0ee06"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udd35 Needs a closer look\n\nThe new defaulting rule for omitted `verification` should be explicitly constrained so it can\u2019t be misread as overriding other spec requirements that mandate specific `trust_status` values.\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (2)\n\n**draft-svensson-credential-oidc-bridge.txt:750**\n* The new rule for an omitted \"verification\" member defines an RP-side default of `trust_status: \"not_checked\"`, but the spec also contains cases that require a specific trust status value (e.g., expired credentials later require `trust_status` to be set to \"expired\"). To avoid a normative ambiguity about whether omission is allowed in those cases, explicitly state that omission is only valid when no other requirement mandates a specific `trust_status` (or other verification metadata).\n```\n   below.  It MAY additionally contain a \"verification\" member (see\n   below); if the \"verification\" member is omitted, the RP MUST treat\n   the entry as if the OP had included a \"verification\" object\n   containing only \"trust_status\": \"not_checked\" (see Section 8.3) and\n   no other members.  The choice between \"claims\" and \"namespaces\"\n```\n**draft-svensson-credential-oidc-bridge.md:760**\n* As in the .txt version, the new defaulting rule for an omitted \"verification\" member could be read as allowing omission even in cases where other parts of the spec require a specific `trust_status` value (e.g., expired credentials later require `trust_status` = \"expired\"). Consider explicitly stating that omission is only allowed when no other requirement mandates a particular trust status / verification metadata.\n```\n\"verification\" member (see below); if the \"verification\" member\nis omitted, the RP MUST treat the entry as if the OP had\nincluded a \"verification\" object containing only\n`\"trust_status\": \"not_checked\"` (see {{trust-status-registry}})\nand no other members.  The choice between \"claims\" and\n```\n\n- **Files reviewed:** 2/2 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-27T09:27:44Z",
+          "updatedAt": "2026-08-27T09:27:44Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABLF3bTg",
+          "commit": {
+            "abbreviatedOid": "da0b193"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udfe2 Approval recommended\n\nThe changes are internally consistent across the .txt and .md sources and clearly define RP/OP behavior for omitted `verification` without introducing conflicting requirements.\n\n<details>\n<summary>Review details</summary>\n\n- **Files reviewed:** 2/2 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-27T09:35:02Z",
+          "updatedAt": "2026-08-27T09:35:02Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "id": "PR_kwDOTuxYJM8AAAABBN6b0A",
+      "title": "Update spec to meet requirements from oidc.",
+      "url": "https://github.com/masv3971/rfc_credential_oidc_bridge/pull/5",
+      "state": "MERGED",
+      "author": "masv3971",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2026-08-27T14:18:19Z",
+      "updatedAt": "2026-08-28T09:02:21Z",
+      "baseRepository": "masv3971/rfc_credential_oidc_bridge",
+      "baseRefName": "main",
+      "baseRefOid": "78a3208e1699c67ce62bb3bbf1ef43d6dc2399de",
+      "headRepository": "masv3971/rfc_credential_oidc_bridge",
+      "headRefName": "masv/fix/implementation_findings",
+      "headRefOid": "b22e3ec506cd5019b742c3a0796f66f208bb3a8a",
+      "closedAt": "2026-08-28T09:02:17Z",
+      "mergedAt": "2026-08-28T09:02:17Z",
+      "mergedBy": "masv3971",
+      "mergeCommit": {
+        "oid": "3223a482e01f58407ec5c7639680dbbee4ad590e"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABLIWdbQ",
+          "commit": {
+            "abbreviatedOid": "5cebad3"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udfe1 Changes recommended\n\nThe new `bridge_` naming rationale overstates that the underscore \u201ckeeps the id within\u201d the required character set, which is not guaranteed unless the scope value itself already conforms.\n\n*Once you've addressed the issues Copilot identified, you can request another Copilot review.*\n\n<details>\n<summary>Pull request overview</summary>\n\nUpdates the Internet-Draft spec text (both the source Markdown and generated TXT) to align the OIDC-bridge profile with OpenID4VP/DCQL and deployment interoperability constraints.\n\n**Changes:**\n- Reserve `bridge_` (instead of `bridge:`) for OP-augmented DCQL Credential Query `id` values, aligning with OpenID4VP `id` character constraints.\n- Define deterministic ordering rules for `presented_credential_sets` in scope-based mode (lexicographic by scope value) and clarify identity-credential selection depends on that ordering.\n- Add guidance on top-level array claim interoperability, and tighten response minimization rules when `claim_sets` is used.\n</details>\n\n<details>\n<summary>File summaries</summary>\n\n| File | Description |\r\n| ---- | ----------- |\r\n| draft-svensson-credential-oidc-bridge.txt | Updates the published I-D text with the new ordering rules, `bridge_` reservation, array-claim compatibility considerations, and RFC6749 reference. |\r\n| draft-svensson-credential-oidc-bridge.md | Updates the source spec with the same normative/behavioral changes and adds RFC6749 to normative references. |\n</details>\n\n<details>\n<summary>Review details</summary>\n\n- **Files reviewed:** 2/2 changed files\n- **Comments generated:** 2\n- **Review effort level:** Lite\n</details>\n\n---\n\n\ud83d\udca1 <a href=\"/masv3971/rfc_credential_oidc_bridge/new/main?filename=.github/skills/code-review/SKILL.md\" class=\"Link--inTextBlock\" target=\"_blank\" rel=\"noopener noreferrer\">Add a `code-review` agent skill</a> or configure MCP servers for context-aware, tailored reviews. <a href=\"https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review#mcp-servers-and-agent-skills\" class=\"Link--inTextBlock\" target=\"_blank\" rel=\"noopener noreferrer\">Learn more in the docs.</a>",
+          "createdAt": "2026-08-27T14:23:38Z",
+          "updatedAt": "2026-08-27T14:23:39Z",
+          "comments": [
+            {
+              "originalPosition": 123,
+              "body": "This wording implies the underscore delimiter guarantees the resulting Credential Query \"id\" stays within the OpenID4VP character set. In reality it only avoids introducing the disallowed ':' character; whether the full id conforms still depends on the scope value itself.",
+              "createdAt": "2026-08-27T14:23:38Z",
+              "updatedAt": "2026-08-27T14:23:39Z"
+            },
+            {
+              "originalPosition": 169,
+              "body": "This text currently says the underscore delimiter \"keeps the id within\" the OpenID4VP character set. The underscore only avoids adding the disallowed ':' character; it does not, by itself, ensure the full id conforms if the scope value contains other disallowed characters.",
+              "createdAt": "2026-08-27T14:23:39Z",
+              "updatedAt": "2026-08-27T14:23:39Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABLIdvJw",
+          "commit": {
+            "abbreviatedOid": "395a965"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udfe1 Changes recommended\n\nSeveral newly introduced normative requirements are underspecified (ordering comparison, claim_sets option selection, and invalid augmented-id handling), which could lead to interoperability variance.\n\n*Once you've addressed the issues Copilot identified, you can request another Copilot review.*\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (4)\n\n**Previously missed (4)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.md:751**\n* The spec requires scope-based mode Credential Sets to be emitted in \"lexicographic\" order, but it doesn't define the comparison (ASCII/Unicode, case-sensitivity, locale). That can lead to non-deterministic interop across implementations and languages.\n```\nthe request.  In scope-based mode the OP MUST emit Credential\nSets in lexicographic ascending order of the credential type\nscope value used as the \"credentials\" object key, so that the\nordering is deterministic even though OAuth 2.0 scope values are\nunordered per Section 3.3 of {{RFC6749}}.\n```\n**draft-svensson-credential-oidc-bridge.txt:741**\n* The spec requires scope-based mode Credential Sets to be emitted in \"lexicographic\" order, but it doesn't define the comparison (ASCII/Unicode, case-sensitivity, locale). That can lead to non-deterministic interop across implementations and languages.\n```\n   same order as they appeared in the request.  In scope-based mode the\n   OP MUST emit Credential Sets in lexicographic ascending order of the\n   credential type scope value used as the \"credentials\" object key, so\n   that the ordering is deterministic even though OAuth 2.0 scope values\n   are unordered per Section 3.3 of [RFC6749].\n```\n**draft-svensson-credential-oidc-bridge.md:1202**\n* \"Matched claim-set option\" is ambiguous when the disclosed claims satisfy more than one option (e.g., wallet over-discloses). Without a deterministic selection rule, different OPs may filter to different claim subsets.\n```\n*  When \"claim_sets\" is present on a Credential Query, the OP MUST\n   include in the corresponding Credential Entry only the claims\n   listed in the matched claim-set option, even if the wallet\n   disclosed additional claims covered by other options.  This\n```\n**draft-svensson-credential-oidc-bridge.txt:1163**\n* \"Matched claim-set option\" is ambiguous when the disclosed claims satisfy more than one option (e.g., wallet over-discloses). Without a deterministic selection rule, different OPs may filter to different claim subsets.\n```\n   *  When \"claim_sets\" is present on a Credential Query, the OP MUST\n      include in the corresponding Credential Entry only the claims\n      listed in the matched claim-set option, even if the wallet\n      disclosed additional claims covered by other options.  This\n```\n\n- **Files reviewed:** 2/2 changed files\n- **Comments generated:** 2\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-27T14:35:14Z",
+          "updatedAt": "2026-08-27T14:35:15Z",
+          "comments": [
+            {
+              "originalPosition": 122,
+              "body": "Appendix A now requires OP-augmented \"id\" values (bridge_ + scope) to conform to the OpenID4VP character set, but doesn't specify what to do when the scope value contains characters that make the concatenated id invalid (OAuth scope-token allows a wider set, e.g. ':').",
+              "createdAt": "2026-08-27T14:35:14Z",
+              "updatedAt": "2026-08-27T14:35:15Z"
+            },
+            {
+              "originalPosition": 169,
+              "body": "Appendix A now requires OP-augmented \"id\" values (bridge_ + scope) to conform to the OpenID4VP character set, but doesn't specify what to do when the scope value contains characters that make the concatenated id invalid (OAuth scope-token allows a wider set, e.g. ':').",
+              "createdAt": "2026-08-27T14:35:15Z",
+              "updatedAt": "2026-08-27T14:35:15Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABLIli9A",
+          "commit": {
+            "abbreviatedOid": "a180af5"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udd35 Needs a closer look\n\nThe newly introduced \u201clexicographic ascending\u201d ordering rule is underspecified and should define the exact comparison method to ensure deterministic, interoperable implementations.\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (4)\n\n**Previously missed (2)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.txt:744**\n* \"Lexicographic ascending\" is underspecified for deterministic ordering; please define the comparison explicitly (e.g., ASCII code point order for RFC6749 scope-token strings) so implementations don't apply locale/collation rules.\n\nThis issue also appears on line 1231 of the same file.\n```\n   same order as they appeared in the request.  In scope-based mode the\n   OP MUST emit Credential Sets in lexicographic ascending order of the\n   credential type scope value used as the \"credentials\" object key, so\n   that the ordering is deterministic even though OAuth 2.0 scope values\n   are unordered per Section 3.3 of [RFC6749].\n```\n**draft-svensson-credential-oidc-bridge.md:754**\n* \"Lexicographic ascending\" is underspecified for deterministic ordering; please define the comparison explicitly (e.g., ASCII code point order for RFC6749 scope-token strings) so implementations don't apply locale/collation rules.\n\nThis issue also appears on line 1268 of the same file.\n```\nthe request.  In scope-based mode the OP MUST emit Credential\nSets in lexicographic ascending order of the credential type\nscope value used as the \"credentials\" object key, so that the\nordering is deterministic even though OAuth 2.0 scope values are\nunordered per Section 3.3 of {{RFC6749}}.\n```\n\n**draft-svensson-credential-oidc-bridge.md:1272**\n* This repeats the \"lexicographic\" ordering rule but still doesn't define how strings are compared; add the same explicit definition here to keep the identity-credential selection unambiguous.\n```\n    {{presented-credential-sets-array}}: for DCQL-based mode it\n    is the order in which Credential Set entries appeared in the\n    request; for scope-based mode it is lexicographic ascending\n    by the credential type scope value used as the \"credentials\"\n    object key.\n```\n**draft-svensson-credential-oidc-bridge.txt:1235**\n* This repeats the \"lexicographic\" ordering rule but still doesn't define how strings are compared; add the same explicit definition here to keep the identity-credential selection unambiguous.\n```\n       by the ordering rules in Section 5.1.1: for DCQL-based mode it is\n       the order in which Credential Set entries appeared in the\n       request; for scope-based mode it is lexicographic ascending by\n       the credential type scope value used as the \"credentials\" object\n       key.\n```\n\n- **Files reviewed:** 2/2 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-27T14:47:24Z",
+          "updatedAt": "2026-08-27T14:47:24Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABLIwxcQ",
+          "commit": {
+            "abbreviatedOid": "a3f7a2e"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udfe1 Changes recommended\n\nSeveral newly introduced normative statements create spec ambiguity/inconsistency (notably claim-set \u201cmatched option\u201d selection and non-significant set ordering with optional `credential_set_id`) that should be resolved before approval.\n\n*Once you've addressed the issues Copilot identified, you can request another Copilot review.*\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (2)\n\n**draft-svensson-credential-oidc-bridge.md:292**\n* This bullet says RP-supplied Credential Query \"id\" values are opaque \"with the sole exception\" of the reserved prefix, but the next sentence adds another OP-side constraint (character-set validation). The \"sole exception\" phrasing is inaccurate/ambiguous; consider explicitly listing both constraints as the OP\u2019s allowed validation so the opacity statement remains correct.\n```\n*  RP-supplied Credential Query \"id\" values are opaque to the OP\n   (per Section 6 of {{OpenID4VP}}) with the sole exception of\n   the reserved prefix defined in {{app-dcql-binding}}, and are\n   used only as response keys and as references from\n   \"credential_sets\".  If any RP-supplied \"id\" does not conform\n```\n**draft-svensson-credential-oidc-bridge.txt:303**\n* This bullet says RP-supplied Credential Query \"id\" values are opaque \"with the sole exception\" of the reserved prefix, but the very next sentence adds another OP-side constraint (character-set validation). The \"sole exception\" phrasing is inaccurate/ambiguous here; consider explicitly listing both constraints as the OP\u2019s allowed validation so the opacity statement remains correct.\n```\n   *  RP-supplied Credential Query \"id\" values are opaque to the OP (per\n      Section 6 of [OpenID4VP]) with the sole exception of the reserved\n      prefix defined in Appendix A, and are used only as response keys\n      and as references from \"credential_sets\".  If any RP-supplied \"id\"\n      does not conform to the character set required by Section 6.1 of\n```\n\n- **Files reviewed:** 2/2 changed files\n- **Comments generated:** 4\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-27T15:04:24Z",
+          "updatedAt": "2026-08-27T15:04:25Z",
+          "comments": [
+            {
+              "originalPosition": 56,
+              "body": "This section makes array order non-significant, but \"credential_set_id\" remains OPTIONAL and the text suggests RPs can just iterate the array. If multiple Credential Sets are returned and the OP omits \"credential_set_id\", the RP has no deterministic way to correlate sets back to its requested \"credential_sets\" entries (previously positional order provided that). Consider requiring \"credential_set_id\" (and uniqueness) whenever multiple Credential Sets are returned, or reintroduce a defined ordering rule.",
+              "createdAt": "2026-08-27T15:04:24Z",
+              "updatedAt": "2026-08-27T15:04:25Z"
+            },
+            {
+              "originalPosition": 70,
+              "body": "This section makes array order non-significant, but \"credential_set_id\" is still OPTIONAL and the text suggests RPs can just iterate the array. If multiple Credential Sets are returned and the OP omits \"credential_set_id\", the RP has no deterministic way to correlate sets back to its requested \"credential_sets\" entries (previously positional order provided that). Consider requiring \"credential_set_id\" (and uniqueness) whenever multiple Credential Sets are returned, or reintroduce a defined ordering rule.",
+              "createdAt": "2026-08-27T15:04:24Z",
+              "updatedAt": "2026-08-27T15:04:25Z"
+            },
+            {
+              "originalPosition": 82,
+              "body": "This new rule depends on identifying \"the matched claim-set option\", but earlier text only requires validating that the disclosed claims satisfy at least one option. If multiple claim-set options are satisfied (common when the wallet over-discloses), the spec doesn\u2019t define which option is considered \"matched\", and different OPs could filter different subsets of claims for the same presentation. Consider adding a deterministic selection rule (e.g., first satisfied option in request order, or the satisfied option with the smallest claim set).",
+              "createdAt": "2026-08-27T15:04:25Z",
+              "updatedAt": "2026-08-27T15:04:25Z"
+            },
+            {
+              "originalPosition": 68,
+              "body": "This new rule depends on identifying \"the matched claim-set option\", but earlier text only requires validating that the disclosed claims satisfy at least one option. If multiple claim-set options are satisfied (common when the wallet over-discloses), the spec doesn\u2019t define which option is considered \"matched\", and different OPs could filter different subsets of claims for the same presentation. Consider adding a deterministic selection rule (e.g., first satisfied option in request order, or the satisfied option with the smallest claim set).",
+              "createdAt": "2026-08-27T15:04:25Z",
+              "updatedAt": "2026-08-27T15:04:25Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABLO8UIg",
+          "commit": {
+            "abbreviatedOid": "55221dd"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udfe1 Changes recommended\n\nThe updated spec introduces internal normative inconsistencies (and .md/.txt divergence) around `credential_set_id` requirements and identifier syntax constraints that should be reconciled before approval.\n\n*Once you've addressed the issues Copilot identified, you can request another Copilot review.*\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (2)\n\n**Previously missed (2)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.txt:741**\n* This definition says credential keys are \"free to use any string\", but the profile now requires RP-supplied Credential Query \"id\" values to conform to the Section 6.1 character set of OpenID4VP. The text here should reflect those syntax constraints so readers don\u2019t assume arbitrary strings are valid keys.\n```\n   values (in DCQL-based mode).  The bridge_ prefix on Credential Query\n   \"id\" values is reserved for the OP-augmented queries defined in\n   Appendix A, and RPs MUST NOT use it as a scope value or as a\n   Credential Query \"id\"; other than that reservation, keys are free to\n   use any string.\n```\n**draft-svensson-credential-oidc-bridge.md:758**\n* This paragraph says credential keys are \"free to use any string\", but the profile now requires RP-supplied Credential Query \"id\" values to conform to the Section 6.1 character set in OpenID4VP. Update this text to reflect those syntax constraints so it doesn\u2019t conflict with {{dcql-based-requests}}.\n```\nare scope values (in scope-based mode) or DCQL Credential Query\n\"id\" values (in DCQL-based mode).  The `bridge_` prefix on\nCredential Query \"id\" values is reserved for the OP-augmented\nqueries defined in {{app-dcql-binding}}, and RPs MUST NOT use it\nas a scope value or as a Credential Query \"id\"; other than that\n```\n\n- **Files reviewed:** 2/2 changed files\n- **Comments generated:** 3\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-28T07:26:10Z",
+          "updatedAt": "2026-08-28T07:26:11Z",
+          "comments": [
+            {
+              "originalPosition": 126,
+              "body": "The profile now states the OP MUST echo each DCQL Credential Set entry \"id\" as \"credential_set_id\" (Section 4.1.2), but this definition still says \"credential_set_id\" is OPTIONAL when exactly one Credential Set is returned. In DCQL-based mode with \"credential_sets\", omitting it would violate the MUST-echo requirement and break correlation semantics; tighten the conditional to make it required when \"credential_sets\" is used.",
+              "createdAt": "2026-08-28T07:26:10Z",
+              "updatedAt": "2026-08-28T07:26:11Z"
+            },
+            {
+              "originalPosition": 124,
+              "body": "The profile now states the OP MUST echo each DCQL Credential Set entry \"id\" as \"credential_set_id\" ({{dcql-based-requests}}), but this definition still makes \"credential_set_id\" OPTIONAL when exactly one Credential Set is returned. For DCQL-based responses that used \"credential_sets\", this should be required to stay consistent with the MUST-echo requirement and correlation semantics.",
+              "createdAt": "2026-08-28T07:26:10Z",
+              "updatedAt": "2026-08-28T07:26:11Z"
+            },
+            {
+              "originalPosition": 26,
+              "body": "The deterministic matched-claim-set selection rule was added here, but the .txt version of the draft doesn\u2019t contain the same requirement in the corresponding DCQL-based requests section. Since the two formats appear to be parallel renderings of the same spec, please mirror this rule into the .txt draft (or drop it here) so normative requirements don\u2019t diverge between outputs.",
+              "createdAt": "2026-08-28T07:26:10Z",
+              "updatedAt": "2026-08-28T07:26:11Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABLPHMgA",
+          "commit": {
+            "abbreviatedOid": "d682603"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udd35 Needs a closer look\n\nThere is a contradictory/misleading statement around Credential Set entry `\"id\"` being OPTIONAL vs REQUIRED in-profile that should be clarified to avoid implementer confusion.\n\n<details>\n<summary>Review details</summary>\n\n### Suppressed comments (2)\n\n**Previously missed (2)** \u2014 in code that hasn't changed since the last review.\n\n**draft-svensson-credential-oidc-bridge.txt:323**\n* This paragraph first states that the Credential Set entry has an OPTIONAL \"id\", but the next sentence makes \"id\" REQUIRED by this profile. Reword the first sentence to avoid implying \"id\" is optional in this specification (while still noting it is optional in the base OpenID4VP definition).\n```\n   Credential Queries as defined in Section 6.3 of [OpenID4VP].  Each\n   Credential Set entry contains an \"options\" array listing alternative\n   AND-groups of Credential Query \"id\"s, plus an OPTIONAL \"id\" and\n   OPTIONAL \"required\" boolean (default true).  In this profile the \"id\"\n   of each Credential Set entry is REQUIRED, so that the OP can\n```\n**draft-svensson-credential-oidc-bridge.md:316**\n* This paragraph says each Credential Set entry has an OPTIONAL \"id\", but then immediately requires \"id\" in this profile. Consider rewording so it does not read as if \"id\" is optional in this specification (while still noting it's optional in the base OpenID4VP definition).\n```\nEach Credential Set entry contains an \"options\" array listing\nalternative AND-groups of Credential Query \"id\"s, plus an OPTIONAL\n\"id\" and OPTIONAL \"required\" boolean (default `true`).  In this\nprofile the \"id\" of each Credential Set entry is REQUIRED, so that\nthe OP can unambiguously correlate response Credential Sets back\n```\n\n- **Files reviewed:** 2/2 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-28T07:49:57Z",
+          "updatedAt": "2026-08-28T07:49:57Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABLPLoIA",
+          "commit": {
+            "abbreviatedOid": "b22e3ec"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "### \ud83d\udfe2 Approval recommended\n\nChanges are internally consistent across both spec representations and primarily strengthen/clarify normative requirements without introducing conflicting definitions in the updated sections.\n\n<details>\n<summary>Review details</summary>\n\n- **Files reviewed:** 2/2 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
+          "createdAt": "2026-08-28T08:00:12Z",
+          "updatedAt": "2026-08-28T08:00:12Z",
           "comments": []
         }
       ]
