@@ -832,7 +832,11 @@ verification
   : A string describing the mechanism used to verify that the
     presenter is the legitimate holder of the credential.  Values
     are taken from the "Credential Holder Binding Methods"
-    registry defined in {{holder-binding-registry}}.
+    registry defined in {{holder-binding-registry}}.  The OP MUST
+    set the value "key_binding" only when it verified the
+    holder-binding proof against the nonce and audience of the
+    current session (see Credential Replay in the Security
+    Considerations).
 
   trust_status
   : REQUIRED string describing the OP's assessment of the
@@ -1435,7 +1439,7 @@ of the deploying parties.
 ## Credential Replay
 
 The OP MUST ensure that credential presentations are bound to the
-current authentication session.  The OP SHOULD use nonces in the
+current authentication session.  The OP MUST use a nonce in the
 OpenID4VP request to prevent replay of previously captured VP Tokens.
 
 When the OP uses OpenID4VP as the presentation protocol and the
@@ -1447,6 +1451,25 @@ separately.  If the authentication request does not carry a
 "nonce", the OP MUST generate a fresh nonce, use it as both the
 OpenID4VP request nonce and the ID Token "nonce" claim, and thereby
 preserve the same binding.
+
+Sending the nonce is not sufficient.  For each presented credential
+that carries a holder-binding proof (for example, the "nonce" and
+"aud" claims of an SD-JWT VC Key Binding JWT), the OP MUST verify
+that the proof contains the nonce and audience the OP sent in the
+request.  The OpenID4VP "state" value correlates the response with
+the transaction.  It does not prove that the credential was
+presented for this session, so the OP MUST NOT use it in place of
+the nonce check.
+
+Whether a holder-binding proof is required is decided by the RP's
+DCQL query through the "require_cryptographic_holder_binding"
+member defined in Section 6.1 of {{OpenID4VP}}.  When the member is
+absent or true, the OP MUST treat a credential that has no valid
+holder-binding proof as not satisfying the query.  When the RP set
+the member to false, the OP MAY accept a credential without a
+holder-binding proof.  Such a presentation cannot be checked for
+replay, so the OP MUST NOT set "holder_binding" to "key_binding"
+for it and MUST omit the "holder_binding" member.
 
 The RP MUST validate standard JWT claims ("iat", "exp", "nonce") in
 the ID Token to ensure freshness of the "presented_credential_sets"
