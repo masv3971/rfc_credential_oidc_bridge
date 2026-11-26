@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-11-24T07:51:35.067222+00:00",
+  "timestamp": "2026-11-26T06:17:03.542251+00:00",
   "repo": "masv3971/rfc_credential_oidc_bridge",
   "labels": [
     {
@@ -49,7 +49,26 @@
       "color": "ffffff"
     }
   ],
-  "issues": [],
+  "issues": [
+    {
+      "number": 6,
+      "id": "I_kwDOTuxYJM8AAAABia6nKA",
+      "title": "Drop the REQUIRED Credential Set id / credential_set_id (not in OpenID4VP 1.0 \u00a76.2)",
+      "url": "https://github.com/masv3971/rfc_credential_oidc_bridge/issues/6",
+      "state": "CLOSED",
+      "author": "masv3971",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [
+        "enhancement"
+      ],
+      "body": "## Problem\n\n\u00a74.1.2 makes an `id` on every `credential_sets` entry REQUIRED, and \u00a75.1.1 / A.3 echo it back as `credential_set_id`. This does not hold up against OpenID4VP 1.0:\n\n- **The \"base definition\" claim is wrong.** \u00a74.1.2 says the `id` is \"OPTIONAL in the base OpenID4VP definition\". OpenID4VP 1.0 \u00a76.2 defines only two members for a Credential Set Query: `options` (REQUIRED) and `required` (OPTIONAL). There is no `id`, so this profile would be adding a DCQL extension, not tightening an optional field.\n- **Wallets cannot use it.** OpenID4VP \u00a76 says implementations MUST ignore unknown properties, so a conforming wallet tolerates the extra member but does nothing with it. The `vp_token` (\u00a78.1) is keyed by Credential Query `id`, never by Credential Set. The id can only travel RP -> OP -> RP; the OP must strip it before forwarding to the wallet, and the draft does not say so (A.2 only says Credential Query ids are forwarded unchanged).\n- **The correlation it buys is already available.** `credentials` in each response set is keyed by the RP-chosen, unique Credential Query ids. The keys present identify which AND-group of `options` matched, so for `pid_or_ehic` either `{pid}` or `{ehic}` is unambiguous without a set id. The RP wrote the query, so it knows its own `options`. Required versus optional is visible from which keys arrived.\n- **It is not used for evaluation.** Whether a set is satisfied depends only on `options`, `required` and the Credential Query ids.\n- **It costs size.** Per-set output copies the same Credential Entries into every set that references them, which makes the ID Token larger (see \u00a76.1 size limits).\n\nFound while implementing the draft in https://github.com/masv3971/credbridge.\n\n## Proposal\n\nDrop the Credential Set `id` and `credential_set_id`, and return the result keyed by Credential Query id, as OpenID4VP does for the `vp_token`.\n\n- `credential_sets` is used only to decide success or failure (per OpenID4VP \u00a76.4.2): a required set with no satisfied option yields `access_denied`.\n- The response carries the matched Credential Entries keyed by Credential Query `id`. No per-alternative naming and no extension to DCQL.\n\n## Spec changes\n\n- \u00a73: Credential Set definition no longer mentions `credential_set_id`.\n- \u00a74.1.2: remove the REQUIRED `id` paragraph and the \"OP MUST reject a request lacking an id\" rule; remove the `id` from the `credential_sets` examples.\n- \u00a75.1.1: remove the `credential_set_id` member and its uniqueness rules; update the `presented_credential_sets` example in \u00a75.1.\n- \u00a75.5 rule 2 (\"across all Credential Sets\") and A.3: adjust to the new shape.\n- A.2: no change needed once the `id` is gone.\n\n## Open questions\n\n- Keep `presented_credential_sets` as an array (with a single element in practice) for future bindings, or change the claim shape? Keeping the array avoids a breaking rename but leaves a structure whose only difference between elements would be content.\n- Is there an RP use case that needs the name of the satisfied alternative rather than which credentials arrived? If so, a separate parameter next to `dcql_query` would keep the DCQL byte-identical to OpenID4VP.\n- Overlapping `options` across two `credential_sets` entries are the one case where key presence is ambiguous; the profile could simply forbid it.\n",
+      "createdAt": "2026-11-25T12:51:25Z",
+      "updatedAt": "2026-11-25T14:17:34Z",
+      "closedAt": "2026-11-25T14:17:34Z",
+      "comments": []
+    }
+  ],
   "pulls": [
     {
       "number": 1,
@@ -1015,6 +1034,48 @@
           "body": "### \ud83d\udfe2 Approval recommended\n\nChanges are internally consistent across both spec representations and primarily strengthen/clarify normative requirements without introducing conflicting definitions in the updated sections.\n\n<details>\n<summary>Review details</summary>\n\n- **Files reviewed:** 2/2 changed files\n- **Comments generated:** 0 new\n- **Review effort level:** Lite\n</details>",
           "createdAt": "2026-08-28T08:00:12Z",
           "updatedAt": "2026-08-28T08:00:12Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "id": "PR_kwDOTuxYJM8AAAABR2lIQw",
+      "title": "Drop Credential Set id and credential_set_id",
+      "url": "https://github.com/masv3971/rfc_credential_oidc_bridge/pull/7",
+      "state": "MERGED",
+      "author": "masv3971",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "OpenID4VP 1.0 section 6.2 defines no \"id\" member for a Credential Set Query, so the REQUIRED \"id\" in section 4.1.2 was a DCQL extension that wallets ignore. The vp_token is keyed by Credential Query id, so the response keys already show which AND-group matched.\n\n- Remove the REQUIRED \"id\" on \"credential_sets\" entries and the \"credential_set_id\" response member (sections 3, 4.1.2, 5.1, 5.1.1, appendix A.3), including from all examples.\n- Say \"credential_sets\" only decides success or failure; the RP reads the matched AND-group from the keys present in \"credentials\".\n- Forbid a Credential Query id in the \"options\" of more than one \"credential_sets\" entry (invalid_request), since overlap is the only case where key presence is ambiguous.\n- Require exactly one Credential Set in the array. Keep the array for future bindings to avoid a breaking rename.\n- Drop \"across all Credential Sets\" from the sub derivation rule.\n\nCloses #6",
+      "createdAt": "2026-11-25T14:14:53Z",
+      "updatedAt": "2026-11-25T14:17:33Z",
+      "baseRepository": "masv3971/rfc_credential_oidc_bridge",
+      "baseRefName": "main",
+      "baseRefOid": "3223a482e01f58407ec5c7639680dbbee4ad590e",
+      "headRepository": "masv3971/rfc_credential_oidc_bridge",
+      "headRefName": "masv/drop_credentail_set_id",
+      "headRefOid": "e5d1ed3f9098f3d368e1f6ee5192be20e75528ef",
+      "closedAt": "2026-11-25T14:17:33Z",
+      "mergedAt": "2026-11-25T14:17:33Z",
+      "mergedBy": "masv3971",
+      "mergeCommit": {
+        "oid": "288068c27ecb6a462050ac9e44790164a393bae2"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOTuxYJM8AAAABaSlU0g",
+          "commit": {
+            "abbreviatedOid": "e5d1ed3"
+          },
+          "author": "copilot-pull-request-reviewer",
+          "authorAssociation": "NONE",
+          "state": "COMMENTED",
+          "body": "<!-- ccr-overview-v2 -->\n\n### \ud83d\udfe2 Approval recommended\n\nNo active review issues are reported for the changes aligning credential-set handling with OpenID4VP.\n\n**No open issues** \ud83c\udf89\n\n<details>\n<summary><strong>What changed in this PR</strong></summary>\n\nThis PR aligns the bridge\u2019s credential-set handling with OpenID4VP by removing Credential Set identifiers and using Credential Query IDs to correlate results, addressing issue #6.\n\n**Changes:**\n- Removes the required Credential Set `id` and response `credential_set_id`, including from examples.\n- Requires exactly one response Credential Set, with matched alternatives identified by keys in `credentials`.\n- Rejects Credential Query IDs shared across multiple request `credential_sets` entries and updates response mapping and subject derivation wording.\n\n| File | Description |\r\n| ---- | ----------- |\r\n| draft-svensson-credential-oidc-bridge.txt | Updates the text draft\u2019s requirements, examples, response mapping, and publication dates. |\r\n| draft-svensson-credential-oidc-bridge.md | Updates the Markdown specification with identifier-free credential-set handling and a single response set. |\n</details>\n\n<sub>Review effort: Balanced</sub>",
+          "createdAt": "2026-11-25T14:16:57Z",
+          "updatedAt": "2026-11-25T14:16:57Z",
           "comments": []
         }
       ]
