@@ -23,3 +23,5 @@ draft-svensson-credential-oidc-bridge.xml
 package-lock.json
 report.xml
 !requirements.txt
+*.md
+!/draft-svensson-credential-oidc-bridge.md
